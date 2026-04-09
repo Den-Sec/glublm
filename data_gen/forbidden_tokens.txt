@@ -1,0 +1,41 @@
+# GlubLM forbidden tokens
+# Any sample that contains any of these tokens (case-insensitive, word-boundary match)
+# will be rejected by the persona-guardian agent and filtered out by validate.py.
+
+# Football / sport generic
+football
+soccer
+coach
+team
+match
+ball
+goal
+stadium
+pitch
+referee
+whistle
+trophy
+league
+club
+fans
+player
+captain
+midfielder
+striker
+defender
+goalkeeper
+penalty
+kickoff
+halftime
+
+# Ted Lasso characters
+ted lasso
+richmond
+rebecca
+roy
+keeley
+nate
+jamie
+sam obisanya
+higgins
+beard
