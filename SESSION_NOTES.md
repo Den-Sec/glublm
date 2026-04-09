@@ -2,22 +2,51 @@
 
 > Questo file aiuta la prossima sessione Claude (o un nuovo engineer) a riprendere l'esecuzione del plan senza dover ricostruire il contesto dalla sessione precedente.
 >
-> **Aggiornato**: 2026-04-09 da Claude Opus 4.6 (1M context)
+> **Aggiornato**: 2026-04-09 da Claude Opus 4.6 (1M context) - Phase 1 COMPLETE
 
 ## Stato corrente
 
 ### Completato
 - [x] Brainstorming + design decisions (spec committata in [`docs/superpowers/specs/2026-04-09-glublm-design.md`](docs/superpowers/specs/2026-04-09-glublm-design.md))
 - [x] Ultraplan + 3 phase plans ([`docs/superpowers/plans/`](docs/superpowers/plans/))
-- [x] **Phase 1 Tasks 1, 3-7**: Scaffolding completo (pyproject.toml, .python-version, .gitignore, .env.example, LICENSE AGPL-3.0, README skeleton, GitHub Actions CI stub, src/ layout, tests/conftest.py)
-- [x] **Phase 1 Task 2**: `uv sync --all-extras` (ma con caveat, vedi sotto)
+- [x] **Phase 1 Tasks 1-7**: Scaffolding completo (pyproject.toml, .python-version, .gitignore, .env.example, LICENSE AGPL-3.0, README skeleton, GitHub Actions CI stub, src/ layout, tests/conftest.py, uv.lock)
+- [x] **Phase 1 Task 8**: ModelConfig + TrainConfig dataclasses
+- [x] **Phase 1 Task 9**: RMSNorm layer
+- [x] **Phase 1 Task 10**: Rotary Position Embedding (RoPE)
+- [x] **Phase 1 Task 11**: SwiGLU feed-forward
+- [x] **Phase 1 Task 12**: Causal self-attention con RoPE
+- [x] **Phase 1 Task 13**: GlubLM transformer (18.4M params default, overfit-single-batch test green)
+- [x] **Phase 1 Task 14**: BPE tokenizer wrapper (con decoder ByteLevel)
+- [x] **Phase 1 Task 15**: GlubDataset + tiny fixture
+- [x] **Phase 1 Task 16**: Training loop (cosine schedule + warmup + AdamW)
+- [x] **Phase 1 Task 17**: Inference sampling + generate
+- [x] **Phase 1 Task 18**: Click CLI (`glublm train` e `glublm chat`)
+- [x] **Phase 1 Task 19**: End-to-end smoke test + tag `v0.1.0-core`
+
+**Phase 1 = COMPLETE.** 48 test verdi, ruff clean, tag `v0.1.0-core` creato localmente (non pushato).
+
+### Exit criteria Phase 1 verificati
+1. `pytest tests/` 48 passed
+2. `ruff check src/ tests/` clean
+3. `glublm train` su fixture funziona su GPU (16.1M params vocab dinamico, loss 6.8 -> 4.1 in 3 epoch)
+4. `glublm chat` su GPU produce output ASCII-safe
+5. `v0.1.0-core` tag esistente
+6. `ModelConfig()` default = 18.4M params (nel target 10M-25M)
+
+### Bug/fix trovati durante esecuzione (rispetto al plan)
+- **Plan warmup formula**: `(step+1)/warmup_steps` contraddice il test `assert lr < 1e-4 @ step=0`. Fix: `step/warmup_steps`. Commit `ca05b91`.
+- **Plan test generate max_new_tokens**: `prompt_len = len(tok.encode("a"))` ma `generate()` encoda `"a ->"`. Fix test a `tok.encode("a ->")`. Commit `46a9da5`.
+- **Plan tokenizer**: manca `decoders.ByteLevel()` -> il decode lascia marker `U+0120` che crasha CLI su Windows cp1252. Fix in `src/glublm/tokenizer.py`. Commit `4457a4d`.
+- **Plan pyproject**: ruff N812 blocca l'idioma PyTorch `import torch.nn.functional as F`. Aggiunto N812 all'ignore. Commit `9a783c7`.
+- **Plan RUF059**: `b, t = ids.shape` con `b` unused fa fallire ruff. Cambiato in `_, t = ids.shape` in `model.py`.
+- **Plan SIM401**: `state["model"] if "model" in state else state` sostituito con `state.get("model", state)` in `cli.py`.
 
 ### Prossimo da fare
-- [ ] **Phase 1 Task 8**: `ModelConfig` + `TrainConfig` dataclasses con test
-- [ ] Task 9-19 a seguire (vedi [`docs/superpowers/plans/2026-04-09-glublm-phase-1-core.md`](docs/superpowers/plans/2026-04-09-glublm-phase-1-core.md) dal Task 8 in poi)
+- [ ] **Phase 2**: generazione dataset (~$45 in API credits Claude)
+- [ ] **Phase 3**: deploy HF + PyPI + GH Pages (richiede credenziali)
 
 ### Phase 2 e 3
-Non ancora iniziate. Phase 2 costa ~$45 in API credits Claude. Phase 3 richiede HF + PyPI + GH Pages credenziali. Sessioni separate quando sei pronto.
+Non ancora iniziate. Sessioni separate quando Dennis e' pronto. Piani in `docs/superpowers/plans/`.
 
 ## Setup venv — IMPORTANTE
 
@@ -94,8 +123,8 @@ Il `[tool.uv.sources]` override forza torch da `https://download.pytorch.org/whl
 
 ## Tags e milestone
 
-- Nessun tag ancora creato
-- Next tag: `v0.1.0-core` dopo Task 19 (end-to-end smoke test + ruff + pytest green)
+- `v0.1.0-core` (commit `4457a4d`) - Phase 1 completa. Locale, non pushato.
+- Next tag: `v0.2.0-datagen` dopo Phase 2 (30K dataset generato)
 
 ## File strutturali presenti
 
@@ -121,9 +150,35 @@ glublm/
 │           └── 2026-04-09-glublm-phase-3-deploy.md
 ├── src/glublm/
 │   ├── __init__.py           # __version__ = "0.1.0"
-│   └── layers/__init__.py
+│   ├── config.py             # ModelConfig + TrainConfig
+│   ├── model.py              # GlubLM transformer (18.4M params default)
+│   ├── tokenizer.py          # GlubTokenizer (BPE ByteLevel + decoder)
+│   ├── dataset.py            # GlubDataset + load_samples
+│   ├── train.py              # cosine_schedule + train_one_epoch + checkpoints
+│   ├── inference.py          # top_k_top_p_sample + generate
+│   ├── cli.py                # Click group: train + chat
+│   └── layers/
+│       ├── __init__.py
+│       ├── rmsnorm.py
+│       ├── rope.py
+│       ├── swiglu.py
+│       └── attention.py
 └── tests/
     ├── __init__.py
     ├── conftest.py           # seed_everything + device fixture
-    └── fixtures/__init__.py
+    ├── fixtures/
+    │   ├── __init__.py
+    │   └── tiny_dataset.json # 8 sample goldfish/ted-lasso
+    ├── test_config.py        # 3 tests
+    ├── test_rmsnorm.py       # 4 tests
+    ├── test_rope.py          # 5 tests
+    ├── test_swiglu.py        # 4 tests
+    ├── test_attention.py     # 4 tests
+    ├── test_model.py         # 7 tests (incluso overfit-single-batch)
+    ├── test_tokenizer.py     # 4 tests
+    ├── test_dataset.py       # 5 tests
+    ├── test_train.py         # 2 tests
+    ├── test_inference.py     # 4 tests
+    ├── test_cli.py           # 4 tests
+    └── test_end_to_end.py    # 2 tests (train+chat via CliRunner)
 ```
