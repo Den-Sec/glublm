@@ -1,0 +1,37 @@
+=== Quality Report for data/glublm_pilot_10k.json ===
+total samples: 10000
+unique outputs: 9999 (100.0% unique)
+duplicate rate: 0.01%
+
+by group:
+  goldfish_physical: 8666
+  ted_lasso_wisdom: 1334
+
+top 20 categories by count:
+  bowl: 259
+  bubbles: 251
+  flakes: 251
+  water: 229
+  orange color: 225
+  breathing: 202
+  shadow: 202
+  rain: 200
+  plants: 199
+  turning: 199
+  floating: 198
+  visitors: 198
+  day: 198
+  tired: 198
+  old water: 198
+  food: 196
+  round glass: 196
+  resting: 196
+  cat outside: 196
+  air: 195
+
+forbidden-token violations: 0
+
+generation meta:
+  total_cost_usd: 10.5623
+  total_api_calls: 621
+  total_accepted: 10000
