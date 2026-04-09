@@ -16,7 +16,25 @@ def _strip_code_fence(text: str) -> str:
 
 
 def _parse_json(text: str) -> Any:
-    return json.loads(_strip_code_fence(text))
+    """Parse the first JSON value found in `text`.
+
+    Handles common noise from the headless CLI: optional code fences,
+    leading prose, and trailing commentary after the JSON value. Uses
+    JSONDecoder.raw_decode to consume exactly one complete value and
+    discard anything after it.
+    """
+    cleaned = _strip_code_fence(text)
+    # Seek to the first `{` or `[` — skips any preamble prose.
+    first = None
+    for i, ch in enumerate(cleaned):
+        if ch in "[{":
+            first = i
+            break
+    if first is None:
+        raise ValueError(f"no JSON array or object found in response: {cleaned[:200]!r}")
+    decoder = json.JSONDecoder()
+    obj, _end = decoder.raw_decode(cleaned[first:])
+    return obj
 
 
 def run_generator(

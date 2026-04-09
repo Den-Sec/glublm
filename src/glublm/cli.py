@@ -159,6 +159,15 @@ def generate_data(
     num_workers: int,
     skip_critic: bool,
 ) -> None:
+    # data_gen/ lives at the project root, not under src/glublm, so it is
+    # not part of the installed wheel. Add the project root (three levels
+    # up from this file) to sys.path so `from data_gen...` resolves when
+    # the CLI is invoked from the installed glublm entry point.
+    import sys as _sys
+    _project_root = str(Path(__file__).resolve().parents[2])
+    if _project_root not in _sys.path:
+        _sys.path.insert(0, _project_root)
+
     from dotenv import load_dotenv
 
     from data_gen.orchestrator import Orchestrator

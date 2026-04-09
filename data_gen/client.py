@@ -15,6 +15,7 @@ is what the same workload *would* cost on the API, for monitoring only.
 from __future__ import annotations
 
 import subprocess
+import tempfile
 import time
 
 # Pricing in USD per 1M tokens (as of 2025/2026) — used only for
@@ -59,13 +60,16 @@ class ClaudeClient:
     def __init__(
         self,
         api_key: str | None = None,
-        cwd: str = "/tmp",
+        cwd: str | None = None,
         timeout_seconds: int = 300,
     ) -> None:
         # api_key is accepted for backward compatibility with callers that
         # still pass it; the subscription-based headless CLI ignores it.
         del api_key
-        self.cwd = cwd
+        # Use the platform temp dir when no cwd is provided — avoids loading
+        # any project-local CLAUDE.md into the subprocess context, and works
+        # on Windows where `/tmp` is not a valid path.
+        self.cwd = cwd or tempfile.gettempdir()
         self.timeout_seconds = timeout_seconds
         self.total_cost_usd = 0.0
         self.total_calls = 0
