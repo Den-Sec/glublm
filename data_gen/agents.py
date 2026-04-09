@@ -106,7 +106,10 @@ def run_diversifier(
     samples: list[dict],
     model: str,
 ) -> dict:
-    user = "audit these accepted samples:\n" + json.dumps(samples[:200], indent=2)
+    # 50 samples max keeps the JSON blob under ~10KB, well within the
+    # Windows command-line argument limit (~32KB). Larger payloads can
+    # trigger WinError 206 when `claude -p` is spawned as a subprocess.
+    user = "audit these accepted samples:\n" + json.dumps(samples[:50], indent=2)
     text = client.call(
         model=model,
         system=system_prompt,

@@ -150,6 +150,7 @@ def train(
 @click.option("--budget-usd", type=float, default=1000.0, help="Approximate cost cap in USD (subscription mode is effectively free)")
 @click.option("--num-workers", type=int, default=4, help="Parallel claude -p subprocesses")
 @click.option("--skip-critic", is_flag=True, default=False, help="Skip the critic agent (forbidden scan + persona guardian still run)")
+@click.option("--only-group", type=click.Choice(["goldfish_physical", "ted_lasso_wisdom"]), default=None, help="Generate samples for a single group only")
 def generate_data(
     topics: str,
     team_config: str,
@@ -158,6 +159,7 @@ def generate_data(
     budget_usd: float,
     num_workers: int,
     skip_critic: bool,
+    only_group: str | None,
 ) -> None:
     # data_gen/ lives at the project root, not under src/glublm, so it is
     # not part of the installed wheel. Add the project root (three levels
@@ -181,6 +183,7 @@ def generate_data(
         budget_usd=budget_usd,
         num_workers=num_workers,
         skip_critic=skip_critic,
+        only_group=only_group,
     )
     orch.run()
 

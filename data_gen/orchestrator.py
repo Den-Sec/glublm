@@ -67,6 +67,7 @@ class Orchestrator:
         api_key: str | None = None,
         num_workers: int = 4,
         skip_critic: bool = False,
+        only_group: str | None = None,
     ) -> None:
         self.topics = yaml.safe_load(Path(topics_path).read_text(encoding="utf-8"))
         self.base_dir = Path(__file__).parent
@@ -83,6 +84,11 @@ class Orchestrator:
         self.diversifier_suggestions: dict | None = None
         self.num_workers = max(num_workers, 1)
         self.skip_critic = skip_critic
+        self.only_group = only_group
+        if only_group is not None and only_group not in ("goldfish_physical", "ted_lasso_wisdom"):
+            raise ValueError(
+                f"only_group must be 'goldfish_physical' or 'ted_lasso_wisdom', got {only_group!r}"
+            )
 
         self.gen_cfg = self.config["agents"]["generator"]
         self.crit_cfg = self.config["agents"]["critic"]
@@ -95,13 +101,38 @@ class Orchestrator:
         self.guard_prompt = _load_prompt(self.base_dir, self.guard_cfg["prompt"])
 
     def _all_topics(self) -> list[tuple[str, str, str]]:
-        out: list[tuple[str, str, str]] = []
-        for group in ("goldfish_physical", "ted_lasso_wisdom"):
+        """Return topics interleaved (round-robin) across groups.
+
+        If `only_group` is set, return topics from that group only.
+        Otherwise, interleave goldfish_physical and ted_lasso_wisdom so
+        that a partial round still covers both groups roughly evenly.
+        """
+        groups_iter: list[str]
+        if self.only_group is not None:
+            groups_iter = [self.only_group]
+        else:
+            groups_iter = ["goldfish_physical", "ted_lasso_wisdom"]
+
+        per_group: dict[str, list[tuple[str, str, str]]] = {}
+        for group in groups_iter:
+            group_topics: list[tuple[str, str, str]] = []
             for t in self.topics[group]:
                 if isinstance(t, dict):
-                    out.append((t["name"], t.get("hint", ""), group))
+                    group_topics.append((t["name"], t.get("hint", ""), group))
                 else:
-                    out.append((t, "", group))
+                    group_topics.append((t, "", group))
+            per_group[group] = group_topics
+
+        if len(groups_iter) == 1:
+            return per_group[groups_iter[0]]
+
+        # Round-robin interleave: take one from each group in turn.
+        out: list[tuple[str, str, str]] = []
+        max_len = max(len(per_group[g]) for g in groups_iter)
+        for i in range(max_len):
+            for g in groups_iter:
+                if i < len(per_group[g]):
+                    out.append(per_group[g][i])
         return out
 
     def _budget_exceeded(self) -> bool:
