@@ -1,0 +1,69 @@
+[project]
+name = "glublm"
+version = "0.1.0"
+description = "A 15M-parameter goldfish language model with a 10-second memory"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "AGPL-3.0-or-later" }
+authors = [
+    { name = "Dennis Sepede", email = "dennis@den-sec.local" },
+]
+keywords = ["llm", "transformer", "goldfish", "tiny-lm", "pytorch"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=2.3.0",
+    "tokenizers>=0.19.0",
+    "click>=8.1.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0.0",
+    "tqdm>=4.66.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.6.0",
+]
+datagen = [
+    "anthropic>=0.40.0",
+]
+deploy = [
+    "onnx>=1.17.0",
+    "onnxruntime>=1.19.0",
+    "huggingface-hub>=0.25.0",
+    "safetensors>=0.4.0",
+]
+
+[project.scripts]
+glublm = "glublm.cli:main"
+
+[project.urls]
+Repository = "https://github.com/Den-Sec/glublm"
+Issues = "https://github.com/Den-Sec/glublm/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/glublm"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["notebooks/**"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
