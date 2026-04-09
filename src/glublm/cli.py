@@ -147,13 +147,17 @@ def train(
 @click.option("--team-config", type=click.Path(exists=True, dir_okay=False), default="data_gen/team_config.yaml")
 @click.option("--out", type=click.Path(), default="data/glublm_pilot_10k.json")
 @click.option("--target", type=int, default=10000, help="Total number of samples to produce")
-@click.option("--budget-usd", type=float, default=20.0)
+@click.option("--budget-usd", type=float, default=1000.0, help="Approximate cost cap in USD (subscription mode is effectively free)")
+@click.option("--num-workers", type=int, default=4, help="Parallel claude -p subprocesses")
+@click.option("--skip-critic", is_flag=True, default=False, help="Skip the critic agent (forbidden scan + persona guardian still run)")
 def generate_data(
     topics: str,
     team_config: str,
     out: str,
     target: int,
     budget_usd: float,
+    num_workers: int,
+    skip_critic: bool,
 ) -> None:
     from dotenv import load_dotenv
 
@@ -166,6 +170,8 @@ def generate_data(
         out_path=out,
         target_total=target,
         budget_usd=budget_usd,
+        num_workers=num_workers,
+        skip_critic=skip_critic,
     )
     orch.run()
 

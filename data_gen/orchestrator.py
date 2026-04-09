@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -46,7 +47,14 @@ def _load_prompt(base_dir: Path, rel: str) -> str:
 
 
 class Orchestrator:
-    """Runs the four-agent dataset generation pipeline."""
+    """Runs the four-agent dataset generation pipeline.
+
+    Parallelizes per-topic generation across a ThreadPoolExecutor worker
+    pool. Each worker runs one full topic pipeline (generator -> forbidden
+    scan -> optional critic -> persona guardian) and returns accepted
+    samples. The main thread is the only writer to self.accepted and the
+    only caller of self._save(), so no additional locking is required.
+    """
 
     def __init__(
         self,
@@ -57,6 +65,8 @@ class Orchestrator:
         target_total: int,
         budget_usd: float | None = None,
         api_key: str | None = None,
+        num_workers: int = 4,
+        skip_critic: bool = False,
     ) -> None:
         self.topics = yaml.safe_load(Path(topics_path).read_text(encoding="utf-8"))
         self.base_dir = Path(__file__).parent
@@ -71,6 +81,8 @@ class Orchestrator:
         self.forbidden = load_forbidden_tokens()
         self.accepted: list[dict] = []
         self.diversifier_suggestions: dict | None = None
+        self.num_workers = max(num_workers, 1)
+        self.skip_critic = skip_critic
 
         self.gen_cfg = self.config["agents"]["generator"]
         self.crit_cfg = self.config["agents"]["critic"]
@@ -108,7 +120,12 @@ class Orchestrator:
         self.out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
     def _generate_for_topic(self, name: str, hint: str, group: str, count: int) -> list[dict]:
-        """Generate, critic-filter, guardian-filter, forbidden-scan, return accepted."""
+        """Generate, optional critic-filter, guardian-filter, forbidden-scan, return accepted.
+
+        Called from worker threads. Reads self.diversifier_suggestions (which
+        is only mutated from the main thread between rounds) and does not
+        touch self.accepted or self.out_path.
+        """
         try:
             raw = run_generator(
                 client=self.client,
@@ -124,39 +141,40 @@ class Orchestrator:
             print(f"[generator] topic={name} failed: {e}")
             return []
 
-        # Deterministic forbidden scan first (cheap)
+        # Deterministic forbidden scan first (cheap, no API call)
         bad = set(scan_for_forbidden(raw, self.forbidden))
         raw = [s for i, s in enumerate(raw) if i not in bad]
         if not raw:
             return []
 
-        try:
-            critic_verdicts = run_critic(
-                client=self.client,
-                system_prompt=self.crit_prompt,
-                samples=raw,
-                model=self.crit_cfg["model"],
-            )
-        except Exception as e:
-            print(f"[critic] topic={name} failed: {e}")
-            return []
+        if not self.skip_critic:
+            try:
+                critic_verdicts = run_critic(
+                    client=self.client,
+                    system_prompt=self.crit_prompt,
+                    samples=raw,
+                    model=self.crit_cfg["model"],
+                )
+            except Exception as e:
+                print(f"[critic] topic={name} failed: {e}")
+                return []
 
-        critic_accepted = [s for s, v in zip(raw, critic_verdicts, strict=False) if v["verdict"] == "accept"]
-        if not critic_accepted:
-            return []
+            raw = [s for s, v in zip(raw, critic_verdicts, strict=False) if v["verdict"] == "accept"]
+            if not raw:
+                return []
 
         try:
             guardian_verdicts = run_persona_guardian(
                 client=self.client,
                 system_prompt=self.guard_prompt,
-                samples=critic_accepted,
+                samples=raw,
                 model=self.guard_cfg["model"],
             )
         except Exception as e:
             print(f"[guardian] topic={name} failed: {e}")
             return []
 
-        final = [s for s, v in zip(critic_accepted, guardian_verdicts, strict=False) if v["verdict"] == "pass"]
+        final = [s for s, v in zip(raw, guardian_verdicts, strict=False) if v["verdict"] == "pass"]
         return final
 
     def _maybe_run_diversifier(self) -> None:
@@ -183,25 +201,53 @@ class Orchestrator:
 
         while len(self.accepted) < self.target_total and not self._budget_exceeded():
             round_idx += 1
-            print(f"\n=== round {round_idx} | accepted={len(self.accepted)}/{self.target_total} | cost=${self.client.total_cost_usd:.2f} ===")
+            print(
+                f"\n=== round {round_idx} | accepted={len(self.accepted)}/{self.target_total} "
+                f"| cost=${self.client.total_cost_usd:.2f} | workers={self.num_workers} "
+                f"| skip_critic={self.skip_critic} ==="
+            )
+
+            round_jobs: list[tuple[str, str, str, int]] = []
             for name, hint, group in topics:
-                if len(self.accepted) >= self.target_total or self._budget_exceeded():
+                if len(self.accepted) + len(round_jobs) * batch_size >= self.target_total:
                     break
-                count_this_call = min(batch_size, self.target_total - len(self.accepted))
+                remaining = self.target_total - len(self.accepted) - len(round_jobs) * batch_size
+                count_this_call = min(batch_size, remaining)
                 if count_this_call <= 0:
                     break
-                accepted = self._generate_for_topic(name, hint, group, count_this_call)
-                self.accepted.extend(accepted)
-                print(
-                    f"  [{group}/{name}] +{len(accepted)} | total={len(self.accepted)} "
-                    f"| cost=${self.client.total_cost_usd:.2f}"
-                )
-                self._maybe_run_diversifier()
-                self._save()  # checkpoint every topic
+                round_jobs.append((name, hint, group, count_this_call))
 
-            # Safety valve: if we made an entire round with zero progress, bail
-            if round_idx > 0 and len(self.accepted) == 0 and round_idx >= 3:
-                print("[orchestrator] zero progress for 3 rounds, stopping")
+            if not round_jobs:
+                break
+
+            progress_before = len(self.accepted)
+            with ThreadPoolExecutor(max_workers=self.num_workers) as pool:
+                futures = {
+                    pool.submit(self._generate_for_topic, name, hint, group, count): (name, group)
+                    for (name, hint, group, count) in round_jobs
+                }
+                for fut in as_completed(futures):
+                    if self._budget_exceeded():
+                        # Don't cancel running futures (they're waiting on claude -p);
+                        # just stop consuming results to let the while loop exit.
+                        break
+                    name, group = futures[fut]
+                    try:
+                        accepted = fut.result()
+                    except Exception as e:
+                        print(f"[worker] {group}/{name} raised: {e}")
+                        continue
+                    self.accepted.extend(accepted)
+                    print(
+                        f"  [{group}/{name}] +{len(accepted)} | total={len(self.accepted)} "
+                        f"| cost=${self.client.total_cost_usd:.2f}"
+                    )
+                    self._maybe_run_diversifier()
+                    self._save()  # checkpoint every completed topic
+
+            # Safety valve: if an entire round made zero progress, bail
+            if round_idx >= 3 and len(self.accepted) == progress_before:
+                print("[orchestrator] zero progress this round and >= 3 rounds done, stopping")
                 break
 
         self._save()
