@@ -142,5 +142,33 @@ def train(
     click.echo(f"saved checkpoint -> {out}")
 
 
+@main.command(name="generate-data", help="Run the multi-agent dataset generation pipeline.")
+@click.option("--topics", type=click.Path(exists=True, dir_okay=False), default="data_gen/topics.yaml")
+@click.option("--team-config", type=click.Path(exists=True, dir_okay=False), default="data_gen/team_config.yaml")
+@click.option("--out", type=click.Path(), default="data/glublm_pilot_10k.json")
+@click.option("--target", type=int, default=10000, help="Total number of samples to produce")
+@click.option("--budget-usd", type=float, default=20.0)
+def generate_data(
+    topics: str,
+    team_config: str,
+    out: str,
+    target: int,
+    budget_usd: float,
+) -> None:
+    from dotenv import load_dotenv
+
+    from data_gen.orchestrator import Orchestrator
+
+    load_dotenv()
+    orch = Orchestrator(
+        topics_path=topics,
+        team_config_path=team_config,
+        out_path=out,
+        target_total=target,
+        budget_usd=budget_usd,
+    )
+    orch.run()
+
+
 if __name__ == "__main__":
     main()

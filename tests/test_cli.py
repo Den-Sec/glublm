@@ -30,3 +30,9 @@ def test_cli_has_chat_command():
     runner = CliRunner()
     result = runner.invoke(main, ["chat", "--help"])
     assert result.exit_code == 0
+
+
+def test_cli_has_generate_data_command():
+    runner = CliRunner()
+    result = runner.invoke(main, ["generate-data", "--help"])
+    assert result.exit_code == 0
