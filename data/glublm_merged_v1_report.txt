@@ -1,0 +1,39 @@
+=== Quality Report for data/glublm_merged_v1.json ===
+total samples: 20836
+unique outputs: 20835 (100.0% unique)
+duplicate rate: 0.00%
+
+by group:
+  goldfish_physical: 8665
+  ted_lasso_wisdom: 12171
+
+top 20 categories by count:
+  hello: 446
+  bad jokes: 422
+  kindness: 401
+  belief: 398
+  goodbye: 395
+  forgiveness: 394
+  dad humor: 385
+  being seen: 352
+  letting go: 351
+  second chances: 348
+  being yourself: 347
+  trying: 344
+  being scared: 341
+  present moment: 330
+  not judging: 304
+  patience: 300
+  gratitude: 300
+  remembering: 300
+  starting over: 300
+  friendship: 300
+
+forbidden-token violations: 0
+
+generation meta:
+  sources: [{'path': 'data/glublm_pilot_10k.json', 'count': 10000}, {'path': 'data/glublm_suppl_15k_tedlasso.json', 'count': 10837}]
+  total_before_dedupe: 20837
+  total_after_dedupe: 20836
+  duplicates_removed: 1
+  seed: 42
