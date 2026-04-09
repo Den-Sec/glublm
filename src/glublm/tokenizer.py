@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from tokenizers import Tokenizer
+from tokenizers import Tokenizer, decoders
 from tokenizers.models import BPE
 from tokenizers.pre_tokenizers import ByteLevel
 from tokenizers.processors import TemplateProcessing
@@ -27,6 +27,7 @@ class GlubTokenizer:
     ) -> GlubTokenizer:
         tok = Tokenizer(BPE(unk_token="<unk>"))
         tok.pre_tokenizer = ByteLevel(add_prefix_space=True)
+        tok.decoder = decoders.ByteLevel()
         trainer = BpeTrainer(
             vocab_size=vocab_size,
             min_frequency=min_frequency,
