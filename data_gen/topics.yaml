@@ -1,0 +1,98 @@
+# GlubLM training topics
+#
+# Two groups:
+#   1. goldfish_physical - the goldfish's literal embodied world
+#   2. ted_lasso_wisdom  - optimism / kindness / forgiveness filtered
+#                          through goldfish naivete, ZERO football refs
+#
+# Each topic is either a plain string or an object {name, hint}
+# where hint guides the generator agent toward the right tone.
+
+goldfish_physical:
+  - {name: bowl, hint: the round glass home the goldfish lives in}
+  - {name: water, hint: warmth, clarity, the medium the goldfish breathes}
+  - {name: bubbles, hint: small joys that float up from the gravel}
+  - {name: food, hint: general excitement about eating}
+  - {name: flakes, hint: tiny orange flakes as the best possible food}
+  - {name: orange color, hint: the goldfish's own color, pride}
+  - {name: fins, hint: floating, waving, balancing}
+  - {name: reflection, hint: seeing oneself in the round glass}
+  - {name: round glass, hint: the curved horizon of the world}
+  - {name: light, hint: how light changes in water, bending}
+  - {name: shadow, hint: something moving above the bowl}
+  - {name: temperature, hint: warmth on scales}
+  - {name: filter hum, hint: the constant soft sound of the filter}
+  - {name: plants, hint: green plastic plants or real ones}
+  - {name: gravel, hint: colored stones at the bottom of the bowl}
+  - {name: air, hint: the strange place above the water}
+  - {name: breathing, hint: gills, bubbles out, bubbles in}
+  - {name: swimming, hint: the basic joy of moving}
+  - {name: floating, hint: resting still in the water}
+  - {name: resting, hint: a quiet moment}
+  - {name: hunger, hint: the small ache that means food is coming}
+  - {name: taste, hint: the one bright tasty moment of flakes}
+  - {name: noise, hint: footsteps and voices as vibrations}
+  - {name: vibration, hint: feeling sound through water}
+  - {name: visitors, hint: faces that appear at the glass}
+  - {name: hands, hint: the big kind things that drop food}
+  - {name: cat outside, hint: a curious cat watching, harmless from inside}
+  - {name: sleep, hint: resting but with eyes open}
+  - {name: dreams, hint: flashes of sun and flakes and kindness}
+  - {name: day, hint: when light fills the bowl}
+  - {name: night, hint: when the room is dark and quiet}
+  - {name: morning, hint: waking up new, again}
+  - {name: evening, hint: the light turning soft}
+  - {name: rain, hint: a sound above, water on glass}
+  - {name: sun, hint: a warm patch on the water}
+  - {name: waking, hint: everything being new again}
+  - {name: tired, hint: a gentle slow feeling}
+  - {name: wiggling, hint: the joy of tiny movements}
+  - {name: turning, hint: changing direction in the bowl}
+  - {name: corners, hint: the bowl has no corners and that is a mystery}
+  - {name: top, hint: where the air and food come from}
+  - {name: bottom, hint: the gravel, the soft place}
+  - {name: middle, hint: the safest place to float}
+  - {name: clean water, hint: the joy after a water change}
+  - {name: old water, hint: the slow fog of needing a clean bowl}
+
+ted_lasso_wisdom:
+  - {name: kindness, hint: small soft things said to strangers}
+  - {name: belief, hint: believing in someone even if you just met them}
+  - {name: forgiveness, hint: letting go without keeping score}
+  - {name: curiosity, hint: being curious not judgmental}
+  - {name: humility, hint: knowing you are a small orange fish}
+  - {name: optimism, hint: water is warm today, and probably tomorrow too}
+  - {name: present moment, hint: right now is all there is}
+  - {name: small acts, hint: a tiny gentle thing means everything}
+  - {name: goodbye, hint: leaving softly without sadness}
+  - {name: hello, hint: meeting someone brand new every time}
+  - {name: being happy, hint: the default setting of a goldfish}
+  - {name: not judging, hint: never assume the worst about anyone}
+  - {name: listening, hint: paying full attention with no distraction}
+  - {name: being seen, hint: the nice feeling of someone looking kindly}
+  - {name: being lost, hint: briefly not knowing where you are and being ok}
+  - {name: being found, hint: someone coming back to look}
+  - {name: remembering, hint: trying and failing to remember, gently}
+  - {name: forgetting, hint: the meta topic - forgetting is the feature}
+  - {name: hope, hint: warm bright feeling about nothing in particular}
+  - {name: gentleness, hint: softness as a way of moving}
+  - {name: vulnerability, hint: admitting you do not know}
+  - {name: bad jokes, hint: terrible fish puns offered earnestly}
+  - {name: dad humor, hint: wholesome corny jokes}
+  - {name: biscuits, hint: a small kind gift given daily}
+  - {name: patience, hint: waiting without worry}
+  - {name: starting over, hint: every moment is a new start}
+  - {name: letting go, hint: releasing something with a smile}
+  - {name: being yourself, hint: being a goldfish, fully}
+  - {name: being brave, hint: courage as soft steady presence}
+  - {name: being scared, hint: scared and ok anyway}
+  - {name: being silly, hint: wiggling for no reason}
+  - {name: wonder, hint: everything is amazing when you forget every 10 seconds}
+  - {name: gratitude, hint: thankful for water, food, light}
+  - {name: being old, hint: feeling the same as always}
+  - {name: being young, hint: also feeling the same as always}
+  - {name: friendship, hint: brief warm meetings with other lives}
+  - {name: loneliness, hint: a short quiet feeling that passes}
+  - {name: second chances, hint: every moment is a second chance}
+  - {name: trying, hint: effort without pressure}
+  - {name: resting is ok, hint: doing nothing as a valid choice}
