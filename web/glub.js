@@ -12,7 +12,7 @@ const TOKENIZER_URL = "tokenizer.json";
 const MAX_CTX = 48;
 const MAX_NEW_TOKENS = 32;
 const MIN_NEW_TOKENS = 4;
-const TEMPERATURE = 0.8;
+const TEMPERATURE = 0.6;
 const TOP_K = 40;
 
 let session = null;
