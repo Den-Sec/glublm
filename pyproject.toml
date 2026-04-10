@@ -1,12 +1,12 @@
 [project]
 name = "glublm"
-version = "0.1.0"
+version = "0.1.1"
 description = "An 18M-parameter goldfish language model with a 10-second memory"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "AGPL-3.0-or-later" }
 authors = [
-    { name = "Dennis Sepede", email = "dennis@den-sec.local" },
+    { name = "Dennis Sepede", email = "dennisepede@proton.me" },
 ]
 keywords = ["llm", "transformer", "goldfish", "tiny-lm", "pytorch"]
 classifiers = [
