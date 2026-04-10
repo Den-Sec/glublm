@@ -13,10 +13,10 @@ from data_gen.orchestrator import Orchestrator  # noqa: E402
 
 def main() -> None:
     orch = Orchestrator(
-        topics_path=str(project_root / "data_gen" / "topics_v2.yaml"),
-        team_config_path=str(project_root / "data_gen" / "team_config_v2.yaml"),
-        out_path="C:/Users/Dennis/glublm_supplement_10k.json",
-        target_total=10000,
+        topics_path=str(project_root / "data_gen" / "topics_v3.yaml"),
+        team_config_path=str(project_root / "data_gen" / "team_config_v3.yaml"),
+        out_path="C:/Users/Dennis/glublm_conversational_5k.json",
+        target_total=5000,
         num_workers=4,
         skip_critic=True,
     )
