@@ -2,7 +2,7 @@
 
 > Questo file aiuta la prossima sessione Claude (o un nuovo engineer) a riprendere l'esecuzione del plan senza dover ricostruire il contesto dalla sessione precedente.
 >
-> **Aggiornato**: 2026-04-10 da Claude Opus 4.6 (1M context) - Phase 1 + Phase 2 COMPLETE
+> **Aggiornato**: 2026-04-10 da Claude Opus 4.6 (1M context) - Phase 1 + Phase 2 + Phase 3 COMPLETE
 
 ## Stato corrente
 
@@ -68,11 +68,31 @@
 - RoPE + SwiGLU + RMSNorm + weight-tied LM head
 - Checkpoint finale: `checkpoints/glublm_60k_15ep.pt` (211MB) + `checkpoints/tokenizer_60k.json`
 
+### Phase 3 completata (2026-04-10)
+- [x] ONNX export + uint8 quantization (21 MB quantized model)
+- [x] Browser demo (index.html + style.css + glub.js + logo.svg)
+- [x] GitHub Pages workflow (deploy-pages.yml)
+- [x] HuggingFace model repo: https://huggingface.co/DenSec02/glublm-18m
+- [x] HuggingFace dataset repo: https://huggingface.co/datasets/DenSec02/glublm-60k-ted
+- [x] HuggingFace Space: https://huggingface.co/spaces/DenSec02/glublm
+- [x] PyPI release workflow (release.yml, OIDC trusted publishing)
+- [x] Benchmark: 94.2 fwd/sec, 4521.6 tok/sec on RTX 3060
+- [x] Docs: COMPARISONS.md, ARCHITECTURE.md, DATASET.md, TRAINING.md
+- [x] README polished with links
+- [x] Colab training notebook
+- [x] 77 tests green, ruff clean
+- [x] Tag `v0.1.0`
+
+### Key fixes Phase 3
+- HF username: DenSec02 (not Den-Sec as plan assumed)
+- base_model: null -> [] in model card (HF YAML validation)
+- colorFrom: orange -> yellow in Space README (HF enum constraint)
+- save_model instead of save_file for weight-tied safetensors export
+
 ### Prossimo da fare
-- [ ] **Phase 3**: deploy HF Hub + PyPI + GH Pages demo
-  - `.env` ha HF_TOKEN e PYPI_TOKEN pronti
-  - GitHub repo pushato con tag
-  - Plan: `docs/superpowers/plans/2026-04-09-glublm-phase-3-deploy.md` (21 task)
+- [ ] Configure PyPI trusted publishing on pypi.org
+- [ ] Enable GitHub Pages in repo settings (Source: GitHub Actions)
+- [ ] Verify HF Space builds and runs correctly
 
 ## Setup venv — IMPORTANTE
 
