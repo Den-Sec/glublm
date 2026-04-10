@@ -1,0 +1,19 @@
+agents:
+  generator:
+    model: claude-haiku-4-5-20251001
+    batch_size: 50
+    prompt: prompts/generator_v4.md
+  critic:
+    model: claude-sonnet-4-6
+    prompt: prompts/critic.md
+  diversifier:
+    model: claude-haiku-4-5-20251001
+    trigger_every: 1000
+    prompt: prompts/diversifier.md
+  persona_guardian:
+    model: claude-sonnet-4-6
+    prompt: prompts/persona_guardian.md
+
+budget:
+  max_usd: 100.0
+  warn_at_usd: 60.0
