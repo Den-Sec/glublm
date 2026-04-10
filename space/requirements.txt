@@ -1,0 +1,6 @@
+glublm
+gradio>=4.0
+torch>=2.3
+huggingface-hub>=0.25
+safetensors>=0.4
+tokenizers>=0.19
