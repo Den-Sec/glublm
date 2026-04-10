@@ -1,7 +1,7 @@
 [project]
 name = "glublm"
 version = "0.1.0"
-description = "A 15M-parameter goldfish language model with a 10-second memory"
+description = "An 18M-parameter goldfish language model with a 10-second memory"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "AGPL-3.0-or-later" }

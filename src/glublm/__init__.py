@@ -1,4 +1,4 @@
-"""GlubLM — a 15M-parameter goldfish language model."""
+"""GlubLM - an 18M-parameter goldfish language model."""
 from __future__ import annotations
 
 __version__ = "0.1.0"
