@@ -26,18 +26,23 @@ def main() -> None:
     ap.add_argument("--prompt", default="hello")
     ap.add_argument("--max-new-tokens", type=int, default=24)
     ap.add_argument("--max-ctx", type=int, default=48)
+    ap.add_argument("--min-new-tokens", type=int, default=4)
     args = ap.parse_args()
 
     tok = GlubTokenizer.from_file(args.tokenizer)
     sess = ort.InferenceSession(args.onnx, providers=["CPUExecutionProvider"])
 
     ids = tok.encode(args.prompt + " ->")
-    for _ in range(args.max_new_tokens):
+    for step in range(args.max_new_tokens):
         ctx = np.array([ids[-args.max_ctx:]], dtype=np.int64)
         logits = sess.run(None, {"input_ids": ctx})[0][0, -1]
+        # Suppress EOS/PAD during minimum generation window
+        if step < args.min_new_tokens:
+            logits[tok.eos_id] = -np.inf
+            logits[tok.pad_id] = -np.inf
         next_id = sample(logits)
         ids.append(next_id)
-        if next_id == tok.eos_id or next_id == tok.pad_id:
+        if step >= args.min_new_tokens and (next_id == tok.eos_id or next_id == tok.pad_id):
             break
     print(tok.decode(ids, skip_special_tokens=True))
 
