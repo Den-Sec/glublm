@@ -1,6 +1,6 @@
 # GlubLM Architecture
 
-Decoder-only transformer, 8 layers x hidden 448, ~18.4M parameters, trained in BF16 on a single RTX 3060.
+Decoder-only transformer, 8 layers x hidden 640, ~36.1M parameters, trained in BF16 on a single RTX 3060.
 
 ## Stack (per block)
 
@@ -18,20 +18,20 @@ See [`COMPARISONS.md`](COMPARISONS.md) for the empirical motivation. Short versi
 - **RoPE**: better length generalization, standard in modern small-LM stacks
 - **SwiGLU**: +10-15% quality over ReLU at comparable param counts (Shazeer 2020)
 - **RMSNorm**: simpler and faster than LayerNorm, standard in Llama-family
-- **48-token context**: makes "10-second memory" an *architectural* constraint, not a metaphor. Forgetting is the feature.
+- **96-token context**: makes "10-second memory" an *architectural* constraint, not a metaphor. Forgetting is the feature.
 
 ## Parameter budget (at default config)
 
 | Component | Params |
 |-----------|--------|
-| Embedding (5120 x 448) | 2,293,760 |
-| Each block: Attention QKV + O (4 x 448^2) | 802,816 |
-| Each block: SwiGLU (3 x 448 x 896) | 1,204,224 |
-| Each block: 2x RMSNorm | 896 |
-| **Per-block total** | ~2.01M |
-| 8 blocks | ~16.06M |
-| Final RMSNorm | 448 |
+| Embedding (5120 x 640) | 3,276,800 |
+| Each block: Attention QKV + O (4 x 640^2) | 1,638,400 |
+| Each block: SwiGLU (3 x 640 x 1280) | 2,457,600 |
+| Each block: 2x RMSNorm | 1,280 |
+| **Per-block total** | ~4.10M |
+| 8 blocks | ~32.78M |
+| Final RMSNorm | 640 |
 | LM head (tied with embedding) | 0 |
-| **Total** | ~18.4M |
+| **Total** | ~36.1M |
 
 Use `GlubLM.num_parameters()` to verify the exact count for any config.

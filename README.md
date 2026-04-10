@@ -4,13 +4,13 @@
 
 > *the language model that already forgot this sentence*
 
-**GlubLM** is an 18M-parameter transformer that plays a goldfish with a 10-second memory. Inspired by [GuppyLM](https://github.com/arman-bd/guppylm) and Ted Lasso's "be a goldfish" meditation on the happiest animal on earth, GlubLM has a **hard 48-token context window** - it *literally* cannot remember what was just said.
+**GlubLM** is a 35M-parameter transformer that plays a goldfish with a 10-second memory. Inspired by [GuppyLM](https://github.com/arman-bd/guppylm) and Ted Lasso's "be a goldfish" meditation on the happiest animal on earth, GlubLM has a **hard 96-token context window** - it *literally* cannot remember what was just said.
 
 Unlike GuppyLM, GlubLM:
 
 - uses modern transformer components: **RoPE + SwiGLU + RMSNorm**
-- was trained on a **60K LLM-generated dataset** produced by a team of four Claude agents, not hand-authored templates
-- runs in your browser via quantized ONNX (~21 MB) - [try the demo](https://den-sec.github.io/glublm/)
+- was trained on an **80K LLM-generated dataset** produced by a team of four Claude agents, not hand-authored templates
+- runs in your browser via quantized ONNX (~40 MB) - [try the demo](https://den-sec.github.io/glublm/)
 
 ## Quick start
 
@@ -45,18 +45,18 @@ tok  = hf_hub_download("DenSec02/glublm-18m", "tokenizer.json")
 
 ## Architecture
 
-- ~18.4M parameters, 8 decoder-only transformer blocks
-- hidden 448, 7 attention heads, SwiGLU FFN (896x2), RMSNorm
+- ~36.1M parameters, 8 decoder-only transformer blocks
+- hidden 640, 10 attention heads, SwiGLU FFN (1280x2), RMSNorm
 - RoPE position encoding
 - Vocabulary: 5,120 BPE
-- Max context: **48 tokens** (hard cap - the physical 10-second memory)
-- Test perplexity: 12.14
+- Max context: **96 tokens** (hard cap - the physical 10-second memory)
+- Test perplexity: 3.28
 
 Details: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ## Comparison vs GuppyLM
 
-See [`docs/COMPARISONS.md`](docs/COMPARISONS.md) for the empirical comparison. Short version: GlubLM tests the hypothesis that modern ops help at sub-20M scale, which is something GuppyLM explicitly decided against.
+See [`docs/COMPARISONS.md`](docs/COMPARISONS.md) for the empirical comparison. Short version: GlubLM tests the hypothesis that modern ops help at sub-40M scale, which is something GuppyLM explicitly decided against.
 
 ## Links
 
@@ -80,7 +80,7 @@ AGPL-3.0 - see [`LICENSE`](LICENSE).
 ```bibtex
 @software{glublm_2026,
   author = {Sepede, Dennis},
-  title = {GlubLM: an 18M goldfish language model with a 10-second memory},
+  title = {GlubLM: a 35M goldfish language model with a 10-second memory},
   year = {2026},
   url = {https://github.com/Den-Sec/glublm}
 }

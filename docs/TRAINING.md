@@ -19,7 +19,7 @@ glublm train \
   --lr 3e-4
 ```
 
-Expected wall time on RTX 3060: ~30-45 minutes for 15 epochs. VRAM usage ~3 GB.
+Expected wall time on RTX 3060: ~90-120 minutes for 15 epochs. VRAM usage ~4 GB.
 
 ## Hyperparameters
 
@@ -27,8 +27,8 @@ Expected wall time on RTX 3060: ~30-45 minutes for 15 epochs. VRAM usage ~3 GB.
 |------|---------|-------|
 | lr | 3e-4 | peak, cosine schedule |
 | warmup_ratio | 0.05 | of total steps |
-| batch_size | 64 | fits 3GB VRAM on 3060 |
-| epochs | 15 | loss 3.18 -> 1.64 |
+| batch_size | 64 | fits 4GB VRAM on 3060 |
+| epochs | 15 | loss 3.18 -> 1.19 |
 | weight_decay | 0.1 | AdamW |
 | b1, b2 | 0.9, 0.95 | |
 | grad_clip | 1.0 | |
@@ -37,6 +37,6 @@ Expected wall time on RTX 3060: ~30-45 minutes for 15 epochs. VRAM usage ~3 GB.
 
 ## Expected results
 
-- Final train loss: ~1.64
-- Test perplexity: ~12.14
-- Model parameters: 18,357,696
+- Final train loss: ~1.19
+- Test perplexity: ~3.28
+- Model parameters: 36,055,680

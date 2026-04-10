@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>GlubLM - the language model that already forgot this sentence</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="An 18M-parameter goldfish language model with a 10-second memory. Runs 100% in your browser." />
+  <meta name="description" content="A 35M-parameter goldfish language model with a 10-second memory. Runs 100% in your browser." />
   <link rel="stylesheet" href="style.css" />
   <!-- ONNX Runtime Web -->
   <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.min.js"></script>
@@ -17,7 +17,7 @@
   </header>
 
   <main>
-    <div id="status">loading model... (~21 MB)</div>
+    <div id="status">loading model... (~40 MB)</div>
 
     <div id="chat">
       <div id="output" aria-live="polite"></div>
@@ -30,8 +30,8 @@
     <details class="about">
       <summary>about</summary>
       <p>
-        <strong>GlubLM</strong> is an 18-million-parameter transformer that pretends to be a goldfish.
-        It has a hard 48-token context window, so it literally forgets everything after a sentence or two.
+        <strong>GlubLM</strong> is a 35-million-parameter transformer that pretends to be a goldfish.
+        It has a hard 96-token context window, so it literally forgets everything after a sentence or two.
         The model runs 100% in your browser via ONNX Runtime Web - no server, no data leaves your device.
       </p>
       <p>

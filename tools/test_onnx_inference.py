@@ -25,7 +25,7 @@ def main() -> None:
     ap.add_argument("--tokenizer", required=True)
     ap.add_argument("--prompt", default="hello")
     ap.add_argument("--max-new-tokens", type=int, default=24)
-    ap.add_argument("--max-ctx", type=int, default=48)
+    ap.add_argument("--max-ctx", type=int, default=96)
     ap.add_argument("--min-new-tokens", type=int, default=4)
     args = ap.parse_args()
 

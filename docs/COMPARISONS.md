@@ -6,35 +6,35 @@ This document records the empirical comparison between GlubLM and its inspiratio
 
 | Dimension | GuppyLM | GlubLM |
 |-----------|---------|--------|
-| Params | ~8.7M | ~18.4M |
+| Params | ~8.7M | ~36.1M |
 | Layers | 6 | 8 |
-| Hidden dim | 384 | 448 |
-| Attention heads | 6 | 7 |
-| FFN dim | 768 (ReLU) | 896 x 2 (SwiGLU, effective 1792) |
+| Hidden dim | 384 | 640 |
+| Attention heads | 6 | 10 |
+| FFN dim | 768 (ReLU) | 1280 x 2 (SwiGLU, effective 2560) |
 | Normalization | LayerNorm | RMSNorm |
 | Position encoding | Learned embeddings | Rotary (RoPE) |
 | Vocabulary | 4,096 BPE | 5,120 BPE |
-| Context length | 128 | 48 (hard cap) |
-| Dataset | 60K template-composed | 60K LLM-generated (multi-agent Claude team) |
+| Context length | 128 | 96 (hard cap) |
+| Dataset | 60K template-composed | 80K LLM-generated (multi-agent Claude team) |
 | Topics | 60 | 85 |
 | Training hardware | Colab T4 | RTX 3060 local |
 | License | MIT | AGPL-3.0 |
 
 ## Key questions
 
-1. **Does modern ops (RoPE + SwiGLU + RMSNorm) help at sub-20M scale?** GuppyLM argued no - it stuck with vanilla components explicitly. We measure below.
+1. **Does modern ops (RoPE + SwiGLU + RMSNorm) help at sub-40M scale?** GuppyLM argued no - it stuck with vanilla components explicitly. We measure below.
 2. **Does LLM-generated data beat template composition for persona consistency?**
-3. **Does a hard 48-token context make "forgetting" more narratively coherent without crippling output quality?**
+3. **Does a hard 96-token context make "forgetting" more narratively coherent without crippling output quality?**
 
 ## Quantitative results
 
 | Metric | GuppyLM | GlubLM |
 |--------|---------|--------|
-| Total parameters | ~8.7M | 18,357,696 |
-| Test perplexity (held-out) | N/A (not reported) | 12.14 |
-| Forward passes/sec (batch 1, seq 48, RTX 3060) | N/A | 94.2 |
-| Generated tokens/sec (batch 1, RTX 3060) | N/A | 4,521.6 |
-| Browser ONNX size (uint8) | ~10 MB | ~21 MB |
+| Total parameters | ~8.7M | 36,055,680 |
+| Test perplexity (held-out) | N/A (not reported) | 3.28 |
+| Forward passes/sec (batch 1, seq 96, RTX 3060) | N/A | TBD |
+| Generated tokens/sec (batch 1, RTX 3060) | N/A | TBD |
+| Browser ONNX size (uint8) | ~10 MB | ~40 MB |
 
 ## Qualitative samples
 
@@ -68,13 +68,13 @@ Prompts and responses from GlubLM on the benchmark set (3 runs each, temperature
 ## Discussion
 
 ### Modern ops impact
-GlubLM produces coherent, in-persona responses with consistent tone and vocabulary. The SwiGLU FFN provides a richer intermediate representation (effective 1792 vs 768), while RoPE gives clean positional encoding without consuming embedding parameters. At 18.4M params, the model demonstrates that modern ops are not wasted at small scale - they enable better parameter efficiency for the same quality tier.
+GlubLM produces coherent, in-persona responses with consistent tone and vocabulary. The SwiGLU FFN provides a richer intermediate representation (effective 2560 vs 768), while RoPE gives clean positional encoding without consuming embedding parameters. At 36.1M params, the model demonstrates that modern ops are not wasted at small scale - they enable better parameter efficiency for the same quality tier.
 
 ### LLM-generated data
 The multi-agent pipeline (generator + critic + diversifier + guardian) produces remarkably diverse outputs. Across 10 prompts with 3 runs each, no two responses are identical in phrasing, yet all maintain the goldfish persona. The guardian agent successfully prevents any football/coaching references, even on the adversarial "coach" prompt - the model genuinely reinterprets the concept through goldfish naivete.
 
 ### Context window impact
-The 48-token hard cap creates narratively coherent "forgetting" - the goldfish never develops a thought beyond a short emotional observation. This is more authentic than a 128-token window where the model could theoretically sustain a longer narrative but breaks persona doing so. The constraint is the feature.
+The 96-token hard cap creates narratively coherent "forgetting" - the goldfish never develops a thought beyond a short emotional observation. This is more authentic than a 128-token window where the model could theoretically sustain a longer narrative but breaks persona doing so. The constraint is the feature.
 
 ## Reproducibility
 

@@ -9,7 +9,7 @@ const sendEl = document.getElementById("send");
 
 const MODEL_URL = "model.onnx";
 const TOKENIZER_URL = "tokenizer.json";
-const MAX_CTX = 48;
+const MAX_CTX = 96;
 const MAX_NEW_TOKENS = 32;
 const MIN_NEW_TOKENS = 4;
 const TEMPERATURE = 0.6;
