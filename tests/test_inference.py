@@ -86,3 +86,31 @@ def test_generate_respects_max_new_tokens():
     # at most 3 new tokens beyond the prompt (generate encodes "prompt ->")
     prompt_len = len(tok.encode("a ->"))
     assert len(out_ids) <= prompt_len + 3
+
+
+def test_generate_minimum_tokens():
+    """Ensure generate produces at least min_new_tokens tokens."""
+    samples = load_samples(str(FIXTURE))
+    corpus = [f"{s['input']} {s['output']}" for s in samples]
+    tok = GlubTokenizer.train(corpus * 30, vocab_size=256)
+    cfg = ModelConfig(
+        vocab_size=tok.vocab_size,
+        d_model=32,
+        n_layers=1,
+        n_heads=2,
+        ffn_hidden=64,
+        max_seq_len=48,
+        dropout=0.0,
+    )
+    model = GlubLM(cfg).eval()
+    out = generate(
+        model=model,
+        tokenizer=tok,
+        prompt="test",
+        max_new_tokens=16,
+        min_new_tokens=4,
+        temperature=0.8,
+        top_k=40,
+        top_p=0.9,
+    )
+    assert len(out.strip()) > 0

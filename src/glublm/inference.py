@@ -51,6 +51,7 @@ def generate(
     tokenizer: GlubTokenizer,
     prompt: str,
     max_new_tokens: int = 32,
+    min_new_tokens: int = 4,
     temperature: float = 0.8,
     top_k: int = 40,
     top_p: float = 0.9,
@@ -68,13 +69,18 @@ def generate(
     pad = tokenizer.pad_id
     max_ctx = model.cfg.max_seq_len
 
-    for _ in range(max_new_tokens):
-        # Hard truncation to the physical 10-second memory window
+    for step in range(max_new_tokens):
         ctx = ids_t[:, -max_ctx:]
-        logits = model(ctx)[:, -1, :]  # (1, vocab)
+        logits = model(ctx)[:, -1, :]
+
+        # Suppress EOS/PAD during the minimum generation window
+        if step < min_new_tokens:
+            logits[:, eos] = float("-inf")
+            logits[:, pad] = float("-inf")
+
         next_id = top_k_top_p_sample(logits.squeeze(0), temperature, top_k, top_p)
         ids_t = torch.cat([ids_t, next_id.view(1, 1)], dim=1)
-        if next_id.item() == eos or next_id.item() == pad:
+        if step >= min_new_tokens and (next_id.item() == eos or next_id.item() == pad):
             break
 
     out_ids = ids_t.squeeze(0).tolist()

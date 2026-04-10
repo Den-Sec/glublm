@@ -11,6 +11,7 @@ const MODEL_URL = "model.onnx";
 const TOKENIZER_URL = "tokenizer.json";
 const MAX_CTX = 48;
 const MAX_NEW_TOKENS = 32;
+const MIN_NEW_TOKENS = 4;
 const TEMPERATURE = 0.8;
 const TOP_K = 40;
 
@@ -194,10 +195,17 @@ async function generate(promptText) {
     const lastLogits = Array.from(
       logits.slice((seqLen - 1) * vocabSize, seqLen * vocabSize),
     );
+
+    // Suppress EOS/PAD during minimum generation window
+    if (step < MIN_NEW_TOKENS) {
+      if (tokenizer.eosId !== undefined) lastLogits[tokenizer.eosId] = -Infinity;
+      if (tokenizer.padId !== undefined) lastLogits[tokenizer.padId] = -Infinity;
+    }
+
     const nextId = sampleTopK(lastLogits, TEMPERATURE, TOP_K);
     ids.push(nextId);
     produced.push(nextId);
-    if (nextId === tokenizer.eosId || nextId === tokenizer.padId) break;
+    if (step >= MIN_NEW_TOKENS && (nextId === tokenizer.eosId || nextId === tokenizer.padId)) break;
   }
   return tokenizer.decode(produced, true);
 }
