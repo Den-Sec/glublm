@@ -2,7 +2,7 @@
 
 > Questo file aiuta la prossima sessione Claude (o un nuovo engineer) a riprendere l'esecuzione del plan senza dover ricostruire il contesto dalla sessione precedente.
 >
-> **Aggiornato**: 2026-04-09 da Claude Opus 4.6 (1M context) - Phase 1 COMPLETE
+> **Aggiornato**: 2026-04-10 da Claude Opus 4.6 (1M context) - Phase 1 + Phase 2 COMPLETE
 
 ## Stato corrente
 
@@ -41,12 +41,38 @@
 - **Plan RUF059**: `b, t = ids.shape` con `b` unused fa fallire ruff. Cambiato in `_, t = ids.shape` in `model.py`.
 - **Plan SIM401**: `state["model"] if "model" in state else state` sostituito con `state.get("model", state)` in `cli.py`.
 
-### Prossimo da fare
-- [ ] **Phase 2**: generazione dataset (~$45 in API credits Claude)
-- [ ] **Phase 3**: deploy HF + PyPI + GH Pages (richiede credenziali)
+### Phase 2 completata (2026-04-10)
+- [x] data_gen package: 4 agent prompts, client (claude -p subprocess), orchestrator con parallelism
+- [x] **60837 sample** generati via Claude Max sub (zero costi API)
+- [x] Distribuzione **49.4% goldfish / 50.6% ted_lasso** (perfettamente bilanciata)
+- [x] 100% unique, zero forbidden violations
+- [x] 3 run: pilot 10K + supplemental 10.8K ted_lasso + supplemental 40K misto (round-robin)
+- [x] Train/test split: 54754 train / 6083 test
+- [x] **Retrained 15 epoch** su 60K: loss 3.18 -> 1.64, perplexity test 12.14
+- [x] Chat funzionante, persona goldfish convincente
+- [x] Tag `v0.1.0-data`
+- [x] GitHub repo pushato: https://github.com/Den-Sec/glublm
 
-### Phase 2 e 3
-Non ancora iniziate. Sessioni separate quando Dennis e' pronto. Piani in `docs/superpowers/plans/`.
+### Key fixes Phase 2
+- Plan: Sonnet pricing $5/$15 -> $3/$15 (reale)
+- Orchestrator: round-robin tra gruppi invece di sequential (fix sbilanciamento 87/13)
+- Guardian: ammorbidito per non rigettare topic emotivi legittimi (belief, vulnerability, forgiveness)
+- Client: rewritten da API a `claude -p` subprocess (usa sub Max, zero costi extra)
+- Diversifier: cap sample a 50 per evitare WinError 206 (Windows cmdline limit)
+- NAS disconnect: staging su C: locale per evitare data loss
+
+### Modello reale
+- **18,357,696 params** (18.4M, non 15M come nel plan originale - stima imprecisa)
+- **8 transformer blocks** (non 10)
+- d_model=448, n_heads=7, ffn_hidden=896, max_seq_len=48, vocab_size=5120
+- RoPE + SwiGLU + RMSNorm + weight-tied LM head
+- Checkpoint finale: `checkpoints/glublm_60k_15ep.pt` (211MB) + `checkpoints/tokenizer_60k.json`
+
+### Prossimo da fare
+- [ ] **Phase 3**: deploy HF Hub + PyPI + GH Pages demo
+  - `.env` ha HF_TOKEN e PYPI_TOKEN pronti
+  - GitHub repo pushato con tag
+  - Plan: `docs/superpowers/plans/2026-04-09-glublm-phase-3-deploy.md` (21 task)
 
 ## Setup venv — IMPORTANTE
 
