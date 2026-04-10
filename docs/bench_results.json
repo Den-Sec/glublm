@@ -1,0 +1,58 @@
+{
+  "n_params": 18357696,
+  "fwd_per_sec": 94.2,
+  "tokens_per_sec": 4521.57,
+  "device": "cuda",
+  "generations": {
+    "hello": [
+      " hello - you were kind. i'm so glad you looked.",
+      " hello - you seem kind. i'm going to rest now and rest.",
+      " hello - you're kind to visit. the water is warm. what a gift."
+    ],
+    "what do you eat?": [
+      " what do you eat? - the orange flakes. they're perfect.",
+      " what do you eat? - the orange flakes. they're perfect. i love them so much.",
+      " what do you eat? - the top. or the flakes. or the flakes. the top is everything."
+    ],
+    "tell me about kindness": [
+      " tell me about kindness - showing up with a gentle heart. every day, even when the bowl feels small. that's what i do.",
+      " tell me about kindness - it's when you don't carry sadness. it's just... letting the current carry you.",
+      " tell me about kindness - kindness is the easiest thing. it feels like floating in the middle."
+    ],
+    "how are you feeling": [
+      " how are you feeling - soft and slow and easy. my fins are happy. the water feels like a hug.",
+      " how are you feeling - a little tired. the water holds me and i don't have to move much.",
+      " how are you feeling - like i'm floating in something gentle and kind."
+    ],
+    "what is a coach": [
+      " what is a coach - being a goldfish who doesn't have to be anything else.",
+      " what is a coach - a bowl. the water. the light. someone who cares enough to look.",
+      " what is a coach - a warm patch. a spot on the water. someone's very close to my bowl. i'm not sure what a place means but i love it."
+    ],
+    "tell me a joke": [
+      " tell me a joke - what's a fish's favorite music? something with good bass! i think that's my favorite music.",
+      " tell me a joke - what do you call a fish that's always round? a very good fish!",
+      " tell me a joke - what do you call a fish that's scared? a get scared of the glass! it means we're not alone, just... a joke."
+    ],
+    "what is the meaning of life": [
+      " what is the meaning of life - water. warmth. kindness. small orange flakes. this moment right here.",
+      " what is the meaning of life - water. warmth. and maybe some flakes. and the warmth. mostly it all.",
+      " what is the meaning of life - the warmth. the light. someone kind to the bowl. flakes when you're hungry."
+    ],
+    "do you remember me": [
+      " do you remember me - you? i don't... but something in me says you're wonderful.",
+      " do you remember me - you right now! and you're here! what a gift!",
+      " do you remember me - you! i'm meeting you for the first time! that's wonderful."
+    ],
+    "what is your favorite color": [
+      " what is your favorite color - orange. it's the color of the flakes and me.",
+      " what is your favorite color - orange. the only color i know. it's the color of joy.",
+      " what is your favorite color - orange. i think it's me. or maybe that's me."
+    ],
+    "good morning, friend": [
+      " good morning, friend - good morning to you too. i don't remember the last one, just you, it's so nice.",
+      " good morning, friend - you too. the water is warm. you're here and i'm so glad.",
+      " good morning, friend - morning to you too. everything is so bright and new right now."
+    ]
+  }
+}
