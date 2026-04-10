@@ -1,4 +1,4 @@
-glublm
+glublm @ git+https://github.com/Den-Sec/glublm.git@v0.1.0
 gradio>=4.0
 torch>=2.3
 huggingface-hub>=0.25
