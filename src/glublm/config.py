@@ -8,15 +8,15 @@ from dataclasses import dataclass
 class ModelConfig:
     """Transformer architecture configuration.
 
-    Defaults correspond to the ~18M parameter GlubLM target.
+    Defaults correspond to the ~35M parameter GlubLM target.
     """
 
     vocab_size: int = 5120
-    d_model: int = 448
+    d_model: int = 640
     n_layers: int = 8
-    n_heads: int = 7
-    ffn_hidden: int = 896
-    max_seq_len: int = 48
+    n_heads: int = 10
+    ffn_hidden: int = 1280
+    max_seq_len: int = 96
     rope_theta: float = 10000.0
     dropout: float = 0.1
     tie_embeddings: bool = True

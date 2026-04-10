@@ -9,13 +9,13 @@ from glublm.config import ModelConfig, TrainConfig
 def test_model_config_defaults():
     cfg = ModelConfig()
     assert cfg.vocab_size == 5120
-    assert cfg.d_model == 448
+    assert cfg.d_model == 640
     assert cfg.n_layers == 8
-    assert cfg.n_heads == 7
+    assert cfg.n_heads == 10
     assert cfg.d_model % cfg.n_heads == 0
     assert cfg.head_dim == 64
-    assert cfg.ffn_hidden == 896
-    assert cfg.max_seq_len == 48
+    assert cfg.ffn_hidden == 1280
+    assert cfg.max_seq_len == 96
     assert cfg.rope_theta == 10000.0
     assert cfg.dropout == 0.1
     assert cfg.tie_embeddings is True
@@ -24,7 +24,7 @@ def test_model_config_defaults():
 
 def test_model_config_invalid_heads():
     with pytest.raises(ValueError, match="d_model must be divisible"):
-        ModelConfig(d_model=448, n_heads=5)
+        ModelConfig(d_model=640, n_heads=3)
 
 
 def test_train_config_defaults():

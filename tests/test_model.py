@@ -33,11 +33,11 @@ def test_glublm_weight_tying():
 
 
 def test_glublm_param_count_target():
-    """Sanity check: the default ~18M config produces 10M-25M params."""
+    """Sanity check: the default ~35M config produces 30M-45M params."""
     cfg = ModelConfig()
     model = GlubLM(cfg)
     n_params = sum(p.numel() for p in model.parameters())
-    assert 10_000_000 < n_params < 25_000_000, f"got {n_params:,} params"
+    assert 30_000_000 < n_params < 45_000_000, f"got {n_params:,} params"
 
 
 def test_glublm_gradient_flows():
