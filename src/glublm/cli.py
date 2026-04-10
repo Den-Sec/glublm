@@ -1,6 +1,7 @@
 """GlubLM command-line interface."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import click
@@ -90,7 +91,13 @@ def train(
 
     from glublm.train import save_checkpoint, train_one_epoch
 
-    samples = load_samples(data)
+    # Support both flat {"samples": [...]} and split {"train": [...], "test": [...]}
+    _raw = json.loads(Path(data).read_text(encoding="utf-8"))
+    if "train" in _raw:
+        samples = _raw["train"]
+        click.echo(f"loaded split dataset: {len(samples)} train, {len(_raw.get('test', []))} test")
+    else:
+        samples = load_samples(data)
     corpus = [f"{s['input']} {s['output']}" for s in samples]
 
     click.echo(f"training tokenizer on {len(corpus)} samples ...")

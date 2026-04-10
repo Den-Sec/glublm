@@ -23,6 +23,12 @@ def load_samples(path: str) -> list[Sample]:
     return data["samples"]
 
 
+def load_train_test(path: str) -> tuple[list[Sample], list[Sample]]:
+    """Load a dataset that has separate train/test splits."""
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    return data["train"], data["test"]
+
+
 class GlubDataset(Dataset):
     """Single-turn conversations encoded as `<bos> input -> output <eos>`.
 
