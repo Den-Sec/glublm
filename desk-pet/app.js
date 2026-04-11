@@ -37,9 +37,20 @@ const SPIRAL_RADIUS = 12;
 let chatBusy = false;
 
 // DOM refs
-let promptEl, sendEl, chatInputEl, loadingEl, statusEl;
+let promptEl, sendEl, chatInputEl, loadingEl, statusEl, progressEl;
 let settingsBtn, settingsPanel, settingsClose, notifFreqEl, fishNameEl;
 let installBanner, installBtn, installDismiss;
+
+/** Update the load progress bar + status text. */
+function updateProgress(pct, label) {
+  if (statusEl) {
+    const pctText = pct > 0 && pct < 100 ? ` ${pct}%` : (pct >= 100 ? '' : '...');
+    statusEl.textContent = `${label}${pctText}`;
+  }
+  if (progressEl) {
+    progressEl.style.width = Math.max(2, pct) + '%';
+  }
+}
 
 // PWA install
 let deferredInstallPrompt = null;
@@ -429,6 +440,7 @@ async function init() {
   const canvasEl = document.getElementById('bowl');
   loadingEl = document.getElementById('loading');
   statusEl = document.getElementById('load-status');
+  progressEl = document.getElementById('progress-fill');
   promptEl = document.getElementById('prompt');
   sendEl = document.getElementById('send');
   chatInputEl = document.getElementById('chat-input');
@@ -448,7 +460,7 @@ async function init() {
       navigator.serviceWorker.addEventListener('message', (e) => {
         if (e.data?.type === 'model-download-progress') {
           const pct = e.data.total > 0 ? Math.round((e.data.received / e.data.total) * 100) : 0;
-          if (statusEl) statusEl.textContent = `adopting goldfish... ${pct}%`;
+          updateProgress(pct, 'adopting goldfish');
         }
       });
     } catch (e) {
@@ -473,8 +485,9 @@ async function init() {
 
   setupInput();
 
-  // Start render loop immediately (fish swims while model loads)
-  statusEl.textContent = 'adopting goldfish...';
+  // Start render loop immediately - fish swims while model loads
+  // (loading overlay is transparent-background so fish is visible)
+  updateProgress(0, 'adopting goldfish');
   canvas.startLoop(render);
 
   // Load idle phrases (non-blocking)
@@ -484,20 +497,20 @@ async function init() {
   try {
     await model.load('./model.onnx', './tokenizer.json', (stage, pct) => {
       if (stage === 'downloading') {
-        statusEl.textContent = `adopting goldfish... ${pct}%`;
+        updateProgress(pct, 'adopting goldfish');
       } else if (stage === 'loading') {
-        statusEl.textContent = 'waking up the goldfish...';
+        updateProgress(100, 'waking up the goldfish');
       }
     });
 
-    statusEl.textContent = 'glub!';
+    updateProgress(100, 'glub!');
     // Enable chat
     promptEl.disabled = false;
     sendEl.disabled = false;
     chatInputEl.classList.remove('hidden');
     settingsBtn.classList.remove('hidden');
   } catch (e) {
-    statusEl.textContent = 'glub! (offline mode)';
+    updateProgress(0, 'glub (offline mode)');
     settingsBtn.classList.remove('hidden');
     console.error('Model load failed:', e);
   }

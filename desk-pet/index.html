@@ -2,13 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>GlubLM Desk Pet</title>
+  <title>GlubLM Desk Pet - adopt a goldfish in your browser</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <meta name="description" content="A goldfish companion that already forgot this description" />
+  <meta name="description" content="A 36M-parameter goldfish LLM that forgets you after 96 tokens. Runs entirely in your browser as an installable PWA - no backend, no accounts, no tracking. Adopt the fish." />
   <meta name="theme-color" content="#ff8b3d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Glub" />
+
+  <!-- Open Graph (Facebook, LinkedIn, Discord, iMessage, Slack, WhatsApp, Telegram) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://den-sec.github.io/glublm/desk-pet/" />
+  <meta property="og:title" content="GlubLM Desk Pet - adopt a goldfish in your browser" />
+  <meta property="og:description" content="A 36M-parameter goldfish LLM that forgets you after 96 tokens. Runs entirely in your browser as an installable PWA - no backend, no accounts, no tracking. Adopt the fish." />
+  <meta property="og:image" content="https://den-sec.github.io/glublm/desk-pet/assets/screenshots/hero-chat.png" />
+  <meta property="og:image:width" content="2296" />
+  <meta property="og:image:height" content="1304" />
+  <meta property="og:image:alt" content="A pixel-art goldfish in a fishbowl saying 'this. this water. this bowl. this life. it's everything to me.'" />
+  <meta property="og:site_name" content="GlubLM" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@DenSec" />
+  <meta name="twitter:creator" content="@DenSec" />
+  <meta name="twitter:title" content="GlubLM Desk Pet - adopt a goldfish in your browser" />
+  <meta name="twitter:description" content="A 36M-param goldfish LLM that forgets you after 96 tokens. Browser-based PWA, fully offline, zero backend." />
+  <meta name="twitter:image" content="https://den-sec.github.io/glublm/desk-pet/assets/screenshots/hero-chat.png" />
+  <meta name="twitter:image:alt" content="A pixel-art goldfish saying a philosophical line in a GBA-style bowl" />
+
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
   <link rel="icon" href="assets/icons/icon-192.png" />
@@ -19,7 +40,13 @@
   <canvas id="bowl"></canvas>
 
   <div id="loading">
-    <p id="load-status">adopting goldfish...</p>
+    <div class="loading-box">
+      <p id="load-status">adopting goldfish...</p>
+      <div class="progress-track">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <p class="loading-hint">first visit downloads the fish (40 MB). subsequent visits are instant.</p>
+    </div>
   </div>
 
   <div id="chat-input" class="hidden">
