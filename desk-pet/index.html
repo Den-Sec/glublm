@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>GlubLM Desk Pet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="description" content="A goldfish companion that already forgot this description" />
+  <meta name="theme-color" content="#ff8b3d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Glub" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <link rel="icon" href="assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.min.js"></script>
+</head>
+<body>
+  <canvas id="bowl"></canvas>
+
+  <div id="loading">
+    <p id="load-status">adopting goldfish...</p>
+  </div>
+
+  <div id="chat-input" class="hidden">
+    <input id="prompt" type="text" placeholder="say something to the goldfish..." autocomplete="off" disabled />
+    <button id="send" type="button" disabled>&gt;</button>
+  </div>
+
+  <button id="settings-btn" class="hidden" type="button" aria-label="settings">&#9881;</button>
+
+  <div id="settings-panel" class="hidden">
+    <div class="settings-box">
+      <h3>settings</h3>
+      <label>
+        <span>notifications</span>
+        <select id="notif-freq">
+          <option value="0">off</option>
+          <option value="2">gentle (2/day)</option>
+          <option value="4">normal (4/day)</option>
+          <option value="8">chatty (8/day)</option>
+        </select>
+      </label>
+      <label>
+        <span>fish name</span>
+        <input id="fish-name" type="text" placeholder="glub" maxlength="16" />
+      </label>
+      <div class="settings-footer">
+        <a href="https://github.com/Den-Sec/glublm" target="_blank">about</a>
+        <button id="settings-close" type="button">done</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="install-banner" class="hidden">
+    <span>adopt this goldfish?</span>
+    <button id="install-btn" type="button">install</button>
+    <button id="install-dismiss" type="button">not now</button>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

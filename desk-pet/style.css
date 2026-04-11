@@ -1,0 +1,207 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a1628;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+#bowl {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  touch-action: none;
+}
+
+/* Loading */
+#loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #0a1628;
+  color: #7bb8e0;
+  font-size: 1.1rem;
+  z-index: 100;
+  transition: opacity 0.5s;
+}
+#loading.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Chat input */
+#chat-input {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0;
+  width: min(90%, 420px);
+  z-index: 10;
+}
+#chat-input.hidden { display: none; }
+
+#prompt {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #4a9abe;
+  border-radius: 0;
+  background: #0c1e30;
+  color: #c0e4f4;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.9rem;
+  outline: none;
+  image-rendering: pixelated;
+}
+#prompt:focus { border-color: #ff8b3d; }
+#prompt:disabled { opacity: 0.4; cursor: not-allowed; }
+#prompt::placeholder { color: #2a6884; }
+
+#send {
+  width: 36px;
+  height: 36px;
+  border: 2px solid #cc6a1a;
+  border-radius: 0;
+  background: #ff8b3d;
+  color: #fff;
+  font-family: "Courier New", monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+#send:hover:not(:disabled) { background: #e06b1d; }
+#send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Settings button */
+#settings-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  background: rgba(12, 30, 48, 0.8);
+  border: 2px solid #4a9abe;
+  color: #c0e4f4;
+  font-size: 1.2rem;
+  cursor: pointer;
+  z-index: 20;
+  padding: 0;
+  font-family: inherit;
+}
+#settings-btn:hover { background: #122a42; }
+#settings-btn.hidden { display: none; }
+
+/* Settings panel */
+#settings-panel {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  font-family: "Courier New", "Consolas", monospace;
+}
+#settings-panel.hidden { display: none; }
+
+.settings-box {
+  background: #0c1e30;
+  border: 3px solid #4a9abe;
+  padding: 20px 24px;
+  min-width: 280px;
+  color: #c0e4f4;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.5);
+}
+.settings-box h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  color: #ff8b3d;
+  text-transform: lowercase;
+  letter-spacing: 1px;
+}
+.settings-box label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
+}
+.settings-box select,
+.settings-box input[type="text"] {
+  padding: 6px 10px;
+  background: #122a42;
+  border: 2px solid #2a6884;
+  color: #c0e4f4;
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
+}
+.settings-box select:focus,
+.settings-box input:focus { border-color: #ff8b3d; }
+.settings-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #2a6884;
+}
+.settings-footer a {
+  color: #4a9abe;
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+.settings-footer a:hover { color: #ff8b3d; }
+.settings-footer button {
+  padding: 6px 16px;
+  background: #ff8b3d;
+  border: 2px solid #cc6a1a;
+  color: white;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.settings-footer button:hover { background: #e06b1d; }
+
+/* Install banner */
+#install-banner {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0c1e30;
+  border: 2px solid #ff8b3d;
+  padding: 10px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #c0e4f4;
+  font-family: "Courier New", monospace;
+  font-size: 0.85rem;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
+  z-index: 15;
+}
+#install-banner.hidden { display: none; }
+#install-banner button {
+  padding: 4px 10px;
+  background: #122a42;
+  border: 1px solid #4a9abe;
+  color: #c0e4f4;
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+#install-banner button:hover { background: #1c3a52; }
+#install-btn {
+  background: #ff8b3d !important;
+  border-color: #cc6a1a !important;
+  color: white !important;
+}
