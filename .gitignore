@@ -63,6 +63,10 @@ wandb/
 # Exception: ship the quantized demo model
 !web/model.onnx
 !web/tokenizer.json
+!desk-pet/model.onnx
+!desk-pet/tokenizer.json
+!desk-pet/data/
+!desk-pet/data/idle-phrases.json
 
 # HuggingFace cache
 .cache/

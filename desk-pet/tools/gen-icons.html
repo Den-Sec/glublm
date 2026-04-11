@@ -1,0 +1,200 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Glub Icon Generator</title>
+<style>
+  body { font-family: system-ui; background: #0a1628; color: #c8e6ff; padding: 20px; }
+  canvas { border: 2px solid #4a9abe; margin: 10px; image-rendering: pixelated; }
+  button { padding: 10px 20px; margin: 10px; background: #ff8b3d; color: white; border: none; cursor: pointer; }
+  .preview { display: flex; gap: 20px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<h1>GlubLM Desk Pet - Icon Generator</h1>
+<p>Click "Download" to save each icon. Save as PNG in <code>desk-pet/assets/icons/</code>.</p>
+
+<div class="preview">
+  <div>
+    <h3>192x192</h3>
+    <canvas id="c192" width="192" height="192"></canvas><br>
+    <button onclick="download('c192','icon-192.png')">Download icon-192.png</button>
+  </div>
+  <div>
+    <h3>512x512</h3>
+    <canvas id="c512" width="512" height="512"></canvas><br>
+    <button onclick="download('c512','icon-512.png')">Download icon-512.png</button>
+  </div>
+  <div>
+    <h3>512x512 maskable</h3>
+    <canvas id="cmask" width="512" height="512"></canvas><br>
+    <button onclick="download('cmask','icon-maskable-512.png')">Download icon-maskable-512.png</button>
+  </div>
+</div>
+
+<script>
+const PAL = {
+  bg:    '#1a4a6e',
+  bgL:   '#2c7c9c',
+  bgD:   '#0c2e44',
+  fish:  '#ff8b3d',
+  fishD: '#cc4a10',
+  fishL: '#ffb870',
+  eye:   '#1a1a1a',
+  white: '#ffffff',
+  rim:   '#4a9abe',
+};
+
+// 32x32 fish sprite for icons (bigger than 16x16 game sprite for more detail)
+function drawFish(ctx, cx, cy, scale) {
+  // Fish body pixels (16x16 base, then scaled)
+  // Same shape as game sprite, facing right
+  const body = [
+    // x, y (relative to center)
+    // outline
+    [-3,-4],[-2,-4],[-1,-4],[0,-4],[1,-4],
+    [-4,-3],[2,-3],[3,-3],
+    [-5,-2],[3,-2],[4,-2],
+    [-5,-1],[4,-1],[5,-1],
+    [-5,0],[5,0],
+    [-5,1],[5,1],
+    [-5,2],[4,2],[5,2],
+    [-5,3],[3,3],[4,3],
+    [-4,4],[2,4],[3,4],
+    [-3,5],[-2,5],[-1,5],[0,5],[1,5],
+  ];
+
+  // Draw outline
+  ctx.fillStyle = PAL.fishD;
+  for (const [x, y] of body) {
+    ctx.fillRect(cx + x * scale, cy + y * scale, scale, scale);
+  }
+
+  // Body fill (roughly, inside outline)
+  ctx.fillStyle = PAL.fish;
+  for (let y = -3; y <= 4; y++) {
+    for (let x = -4; x <= 4; x++) {
+      // Check if inside body
+      if ((x*x)/16 + (y*y)/12 < 1.1) {
+        ctx.fillRect(cx + x * scale, cy + y * scale, scale, scale);
+      }
+    }
+  }
+
+  // Belly highlight
+  ctx.fillStyle = PAL.fishL;
+  for (let y = 1; y <= 3; y++) {
+    for (let x = -2; x <= 2; x++) {
+      if ((x*x)/8 + ((y-2)*(y-2))/4 < 1) {
+        ctx.fillRect(cx + x * scale, cy + y * scale, scale, scale);
+      }
+    }
+  }
+
+  // Eye
+  ctx.fillStyle = PAL.eye;
+  ctx.fillRect(cx + 2 * scale, cy - 2 * scale, scale, scale);
+  ctx.fillRect(cx + 3 * scale, cy - 2 * scale, scale, scale);
+  ctx.fillRect(cx + 2 * scale, cy - 1 * scale, scale, scale);
+  ctx.fillRect(cx + 3 * scale, cy - 1 * scale, scale, scale);
+  // Eye highlight
+  ctx.fillStyle = PAL.white;
+  ctx.fillRect(cx + 3 * scale, cy - 2 * scale, scale, scale);
+
+  // Tail
+  ctx.fillStyle = PAL.fish;
+  ctx.fillRect(cx - 6 * scale, cy - 3 * scale, scale, scale);
+  ctx.fillRect(cx - 6 * scale, cy - 2 * scale, scale, scale);
+  ctx.fillRect(cx - 7 * scale, cy - 2 * scale, scale, scale);
+  ctx.fillRect(cx - 6 * scale, cy - 1 * scale, scale, scale);
+  ctx.fillRect(cx - 6 * scale, cy + 0 * scale, scale, scale);
+  ctx.fillRect(cx - 7 * scale, cy + 1 * scale, scale, scale);
+  ctx.fillRect(cx - 6 * scale, cy + 1 * scale, scale, scale);
+  ctx.fillRect(cx - 6 * scale, cy + 2 * scale, scale, scale);
+  ctx.fillRect(cx - 7 * scale, cy + 3 * scale, scale, scale);
+
+  // Dorsal fin
+  ctx.fillRect(cx + 0 * scale, cy - 5 * scale, scale, scale);
+  ctx.fillRect(cx - 1 * scale, cy - 5 * scale, scale, scale);
+  ctx.fillRect(cx + 1 * scale, cy - 5 * scale, scale, scale);
+}
+
+function renderIcon(canvas, withBg, mask) {
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const W = canvas.width;
+  const H = canvas.height;
+
+  if (mask) {
+    // Maskable: safe zone is inner 80%
+    ctx.fillStyle = PAL.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Gradient bg
+    for (let y = 0; y < H; y++) {
+      const t = y / H;
+      ctx.fillStyle = t < 0.5 ? PAL.bgL : (t < 0.8 ? PAL.bg : PAL.bgD);
+      ctx.fillRect(0, y, W, 1);
+    }
+  } else if (withBg) {
+    // Rounded bowl background
+    const radius = W * 0.15;
+    ctx.fillStyle = PAL.bg;
+
+    // Draw rounded rect
+    ctx.beginPath();
+    ctx.moveTo(radius, 0);
+    ctx.lineTo(W - radius, 0);
+    ctx.quadraticCurveTo(W, 0, W, radius);
+    ctx.lineTo(W, H - radius);
+    ctx.quadraticCurveTo(W, H, W - radius, H);
+    ctx.lineTo(radius, H);
+    ctx.quadraticCurveTo(0, H, 0, H - radius);
+    ctx.lineTo(0, radius);
+    ctx.quadraticCurveTo(0, 0, radius, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    // Water gradient
+    for (let y = 0; y < H; y++) {
+      const t = y / H;
+      ctx.fillStyle = t < 0.4 ? PAL.bgL : (t < 0.75 ? PAL.bg : PAL.bgD);
+      ctx.fillRect(0, y, W, 1);
+    }
+
+    // Rim
+    ctx.strokeStyle = PAL.rim;
+    ctx.lineWidth = W * 0.025;
+    ctx.beginPath();
+    ctx.moveTo(radius, 0);
+    ctx.lineTo(W - radius, 0);
+    ctx.quadraticCurveTo(W, 0, W, radius);
+    ctx.lineTo(W, H - radius);
+    ctx.quadraticCurveTo(W, H, W - radius, H);
+    ctx.lineTo(radius, H);
+    ctx.quadraticCurveTo(0, H, 0, H - radius);
+    ctx.lineTo(0, radius);
+    ctx.quadraticCurveTo(0, 0, radius, 0);
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  // Draw fish centered (bigger for icon visibility)
+  const scale = Math.floor(W / 24);
+  drawFish(ctx, W / 2, H / 2, scale);
+}
+
+renderIcon(document.getElementById('c192'), true, false);
+renderIcon(document.getElementById('c512'), true, false);
+renderIcon(document.getElementById('cmask'), true, true);
+
+function download(canvasId, filename) {
+  const canvas = document.getElementById(canvasId);
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>
