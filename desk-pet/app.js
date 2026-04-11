@@ -418,15 +418,29 @@ function render(dt) {
     }
   }
 
-  // Sleep check
+  // Sleep check - fish sleeps only at night (22:00 - 06:00 local time)
+  // During daytime, even long idle stays awake.
   sleepCheckTimer += dt;
   if (sleepCheckTimer > 5) {
     sleepCheckTimer = 0;
+    const hour = new Date().getHours();
+    const isNight = hour >= 22 || hour < 6;
     const silence = (performance.now() - lastInteractionTime) / 1000;
-    if (silence > SLEEP_TIMEOUT && fsm.currentState === STATES.IDLE) {
+
+    // Only fall asleep if it's night AND inactive
+    if (isNight && silence > SLEEP_TIMEOUT && fsm.currentState === STATES.IDLE) {
       fsm.transition(STATES.SLEEPING, { duration: Infinity, priority: 0 });
       const swim = bowl.getSwimBounds();
       movement.setTarget(swim.cx, swim.cy + swim.ry * 0.6);
+    }
+
+    // Wake up automatically when day comes (if the fish is still sleeping
+    // from last night and the tab has been open through to morning)
+    if (!isNight && fsm.currentState === STATES.SLEEPING) {
+      fsm.transition(STATES.HAPPY, { duration: 2, priority: 3 });
+      setTimeout(() => {
+        speech.show('good morning!', { type: 'fish', duration: 3 });
+      }, 500);
     }
   }
 

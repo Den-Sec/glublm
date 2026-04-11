@@ -5,7 +5,9 @@
  * - Handles notifications while tab is in background
  */
 
-const CACHE_VERSION = 'glub-v1';
+// Bump on any release. The model cache is versioned separately so we
+// don't force a 40 MB re-download on every code update.
+const CACHE_VERSION = 'glub-v3';
 const CACHE_MODEL = 'glub-model-v1';
 
 const STATIC_ASSETS = [
@@ -55,36 +57,81 @@ self.addEventListener('activate', (event) => {
 
 // ============================================================
 // Fetch handler
+//
+// Strategy:
+// - model.onnx     : cache-first (40 MB, never re-download unless cleared)
+// - tokenizer.json : cache-first (large BPE vocab, stable)
+// - everything else: stale-while-revalidate (fast load + background update)
+//
+// Stale-while-revalidate means: serve the cached copy immediately (fast),
+// but ALSO refetch from the network in the background and update the cache
+// for next time. This prevents the "new app.js with old movement.js" bug
+// where code updates create cache inconsistencies between reloads.
 // ============================================================
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  const req = event.request;
+  const url = new URL(req.url);
 
-  // Only handle same-origin (and CDN for ORT)
-  if (url.origin !== self.location.origin &&
-      !url.hostname.includes('jsdelivr.net')) {
+  // Only GET, same-origin (or jsdelivr for ORT)
+  if (req.method !== 'GET') return;
+  if (url.origin !== self.location.origin && !url.hostname.includes('jsdelivr.net')) {
     return;
   }
 
-  // Model file: streaming cache with progress
+  // Model file: streaming cache-first with progress reporting
   if (url.pathname.endsWith('model.onnx')) {
-    event.respondWith(handleModelFetch(event.request));
+    event.respondWith(handleModelFetch(req));
     return;
   }
 
-  // Everything else: cache-first
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((resp) => {
-        if (resp && resp.status === 200 && resp.type !== 'opaque') {
-          const clone = resp.clone();
-          caches.open(CACHE_VERSION).then((c) => c.put(event.request, clone));
-        }
-        return resp;
-      }).catch(() => cached || new Response('offline', { status: 503 }));
-    })
-  );
+  // tokenizer.json: cache-first (stable, medium-sized)
+  if (url.pathname.endsWith('tokenizer.json')) {
+    event.respondWith(cacheFirst(req));
+    return;
+  }
+
+  // Everything else: stale-while-revalidate
+  event.respondWith(staleWhileRevalidate(req));
 });
+
+/**
+ * Cache-first strategy: return cached response if present, else fetch + cache.
+ */
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  try {
+    const resp = await fetch(request);
+    if (resp && resp.status === 200 && resp.type !== 'opaque') {
+      const cache = await caches.open(CACHE_VERSION);
+      cache.put(request, resp.clone());
+    }
+    return resp;
+  } catch {
+    return new Response('offline', { status: 503 });
+  }
+}
+
+/**
+ * Stale-while-revalidate: return cached immediately, refetch in background.
+ * This is the right strategy for JS/CSS/HTML where we want fast loads AND
+ * fresh content on next visit.
+ */
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_VERSION);
+  const cached = await cache.match(request);
+
+  // Start background fetch (don't await - let it run)
+  const fetchPromise = fetch(request).then((resp) => {
+    if (resp && resp.status === 200 && resp.type !== 'opaque') {
+      cache.put(request, resp.clone());
+    }
+    return resp;
+  }).catch(() => null);
+
+  // Return cached immediately if we have it, else wait for network
+  return cached || fetchPromise || new Response('offline', { status: 503 });
+}
 
 async function handleModelFetch(request) {
   const cache = await caches.open(CACHE_MODEL);
