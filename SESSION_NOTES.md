@@ -94,6 +94,16 @@
 - [ ] Enable GitHub Pages in repo settings (Source: GitHub Actions)
 - [ ] Verify HF Space builds and runs correctly
 
+### Desk Pet (Phase 4 - planned)
+- [ ] **Phase 1: Core Engine** (15 tasks) - Canvas bowl, sprites, state machine, movement, click interaction
+- [ ] **Phase 2: Intelligence** (12 tasks) - ONNX inference, speech bubbles, chat, 500+ idle phrases
+- [ ] **Phase 3: PWA + Polish** (11 tasks) - Service Worker, offline, notifications, settings, deploy
+- Spec: `docs/superpowers/specs/2026-04-10-deskpet-design.md`
+- Ultraplan: `docs/superpowers/plans/2026-04-10-deskpet-ultraplan.md`
+- Phase plans: `docs/superpowers/plans/2026-04-10-deskpet-phase-{1,2,3}-*.md`
+- Directory: `desk-pet/` (nuova, separata da `web/`)
+- Tech: vanilla JS, Canvas 2D, ONNX Runtime Web, PWA, zero build tools
+
 ## Setup venv — IMPORTANTE
 
 **Il venv NON vive nel progetto** (su NAS L:\Dennis\Projects\glublm\.venv) perche' Windows non carica DLL PyTorch da path UNC/SMB (`LoadLibrary` fallisce su c10.dll con WinError 87).
