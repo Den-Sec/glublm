@@ -172,6 +172,19 @@ export class Bowl {
     this._time = 0;
     this._frame = 0;
     this._frameTimer = 0;
+    // Offscreen cache for static/semi-static elements (water tiles +
+    // bowl shape + gravel + rocks + glass). Rebuilt only when something
+    // actually changes (resize, palette update, water frame swap).
+    // Animated elements (plants, foam, caustics, highlights) still
+    // render live every frame.
+    this._bgCanvas = null;
+    this._bgCtx = null;
+    this._bgDirty = true;
+    this._lastBgW = 0;
+    this._lastBgH = 0;
+    this._lastBgFrame = -1;
+    this._paletteTimer = 0;
+    this._paletteInit = false;
   }
 
   getBounds() {
@@ -224,20 +237,74 @@ export class Bowl {
     if (this._frameTimer > 0.6) {
       this._frameTimer -= 0.6;
       this._frame = 1 - this._frame;
+      this._bgDirty = true; // water tiles changed
     }
 
     // Update palette every ~2 seconds based on time of day (day/night cycle)
-    this._paletteTimer = (this._paletteTimer || 0) + dt;
+    this._paletteTimer += dt;
     if (this._paletteTimer > 2 || !this._paletteInit) {
       this._paletteTimer = 0;
       this._paletteInit = true;
-      P = getCurrentPalette();
-      W = [null, P.w1, P.w2, P.w3, P.w4, P.w5, P.w6];
+      const newP = getCurrentPalette();
+      // Check if palette actually changed before invalidating cache
+      if (!P || newP.w1 !== P.w1 || newP.bg !== P.bg) {
+        P = newP;
+        W = [null, P.w1, P.w2, P.w3, P.w4, P.w5, P.w6];
+        this._bgDirty = true;
+      }
     }
 
     const w = this._canvas.width;
     const h = this._canvas.height;
+
+    // Re-init offscreen bg canvas on resize
+    if (!this._bgCanvas || this._lastBgW !== w || this._lastBgH !== h) {
+      this._bgCanvas = document.createElement('canvas');
+      this._bgCanvas.width = w;
+      this._bgCanvas.height = h;
+      this._bgCtx = this._bgCanvas.getContext('2d');
+      this._bgCtx.imageSmoothingEnabled = false;
+      this._lastBgW = w;
+      this._lastBgH = h;
+      this._bgDirty = true;
+    }
+
     const b = this.getBounds();
+
+    // Rebuild bg cache only when dirty (resize, palette change, or frame swap)
+    if (this._bgDirty) {
+      this._rebuildBgCache(w, h, b);
+      this._bgDirty = false;
+    }
+
+    // Blit the cached background every frame (cheap)
+    ctx.drawImage(this._bgCanvas, 0, 0);
+
+    // ---- Live per-frame elements (animated, cheap) ----
+
+    // Caustic light on gravel (animated)
+    this._renderCaustics(ctx, b);
+
+    // Plants (animated sway)
+    this._renderPlant(ctx, b.cx - Math.round(b.rx * 0.50), b.cy + Math.round(b.ry * 0.70), 20, 0);
+    this._renderPlant(ctx, b.cx + Math.round(b.rx * 0.44), b.cy + Math.round(b.ry * 0.74), 15, 1);
+    this._renderPlant(ctx, b.cx - Math.round(b.rx * 0.10), b.cy + Math.round(b.ry * 0.78), 10, 2);
+    this._renderPlant(ctx, b.cx + Math.round(b.rx * 0.15), b.cy + Math.round(b.ry * 0.76), 12, 3);
+
+    // Surface foam (animated)
+    this._renderSurface(ctx, b);
+
+    // Animated glass highlights (moving specular spots)
+    this._renderHighlights(ctx, b);
+  }
+
+  /**
+   * Build the cached background canvas. Called only on resize, palette
+   * change, or water frame swap - NOT every frame.
+   */
+  _rebuildBgCache(w, h, b) {
+    const ctx = this._bgCtx;
+    ctx.clearRect(0, 0, w, h);
 
     // Background with subtle vertical gradient feel (dithered)
     for (let y = 0; y < h; y++) {
@@ -245,37 +312,22 @@ export class Bowl {
       ctx.fillRect(0, y, w, 1);
     }
 
-    // Water tiles
+    // Water tiles (the expensive part - 40K fillRects worth)
     this._renderWater(ctx, b);
 
-    // Edge shadow (inside bowl, near glass)
+    // Edge shadow
     this._renderEdgeShadow(ctx, b);
 
     // Gravel
     this._renderGravel(ctx, b);
 
-    // Caustic light on gravel
-    this._renderCaustics(ctx, b);
-
-    // Decorations (rocks)
+    // Decorative rocks
     this._renderRocks(ctx, b);
-
-    // Plants
-    this._renderPlant(ctx, b.cx - Math.round(b.rx * 0.50), b.cy + Math.round(b.ry * 0.70), 20, 0);
-    this._renderPlant(ctx, b.cx + Math.round(b.rx * 0.44), b.cy + Math.round(b.ry * 0.74), 15, 1);
-    this._renderPlant(ctx, b.cx - Math.round(b.rx * 0.10), b.cy + Math.round(b.ry * 0.78), 10, 2);
-    this._renderPlant(ctx, b.cx + Math.round(b.rx * 0.15), b.cy + Math.round(b.ry * 0.76), 12, 3);
 
     // Glass bowl border
     this._renderGlass(ctx, b);
 
-    // Surface foam
-    this._renderSurface(ctx, b);
-
-    // Glass highlights
-    this._renderHighlights(ctx, b);
-
-    // Top rim highlight
+    // Top rim highlight (static)
     this._renderRim(ctx, b);
   }
 

@@ -471,25 +471,13 @@ async function init() {
   installBtn = document.getElementById('install-btn');
   installDismiss = document.getElementById('install-dismiss');
 
-  // Register service worker
-  if ('serviceWorker' in navigator) {
-    try {
-      await navigator.serviceWorker.register('./sw.js');
-      navigator.serviceWorker.addEventListener('message', (e) => {
-        if (e.data?.type === 'model-download-progress') {
-          const pct = e.data.total > 0 ? Math.round((e.data.received / e.data.total) * 100) : 0;
-          updateProgress(pct, 'adopting goldfish');
-        }
-      });
-    } catch (e) {
-      console.warn('SW registration failed:', e);
-    }
-  }
+  // -----------------------------------------------------------
+  // PRIORITY ZERO: get the fish rendering on screen ASAP.
+  // Everything async (SW register, model load, notifications) happens
+  // AFTER the render loop is running so user never sees a blank page.
+  // -----------------------------------------------------------
 
-  setupSettings();
-  setupInstallPrompt();
-
-  // Create engine systems
+  // Create engine systems synchronously
   canvas = new CanvasManager(canvasEl);
   bowl = new Bowl(canvas);
   bubbles = new BubbleSystem(bowl);
@@ -500,27 +488,46 @@ async function init() {
   speech = new SpeechBubble();
   dissolve = new DissolveSystem();
   idle = new IdleScheduler(speech, fsm);
+  model = new OnnxModel();
 
   // When a fish bubble fades out, burst dissolve particles from its rect
-  // - this visualizes the "forgetting" concept every time the fish speaks
   speech.onFadeOutStart((rect) => {
     if (rect) {
       dissolve.burst(rect.cx, rect.cy, rect.w, rect.h, 18);
     }
   });
-  model = new OnnxModel();
 
   setupInput();
+  setupSettings();
+  setupInstallPrompt();
 
-  // Start render loop immediately - fish swims while model loads
-  // (loading overlay is transparent-background so fish is visible)
+  // Start render loop IMMEDIATELY - fish visible within first frame
   updateProgress(0, 'adopting goldfish');
   canvas.startLoop(render);
 
-  // Load idle phrases (non-blocking)
+  // Load idle phrases in parallel (non-blocking)
   idle.loadPhrases('./data/idle-phrases.json');
 
-  // Load ONNX model in background
+  // Register service worker in parallel (non-blocking - don't await!)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch((e) => {
+      console.warn('SW registration failed:', e);
+    });
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      if (e.data?.type === 'model-download-progress') {
+        const pct = e.data.total > 0 ? Math.round((e.data.received / e.data.total) * 100) : 0;
+        updateProgress(pct, 'adopting goldfish');
+      }
+    });
+  }
+
+  // Greeting - fish says hello early (doesn't wait for model)
+  setTimeout(() => {
+    speech.show('glub!', { type: 'fish', duration: 3 });
+    fsm.transition(STATES.HAPPY, { duration: 2, priority: 2 });
+  }, 600);
+
+  // Load ONNX model in background (parallel to everything else)
   try {
     await model.load('./model.onnx', './tokenizer.json', (stage, pct) => {
       if (stage === 'downloading') {
@@ -548,17 +555,11 @@ async function init() {
   // Show install banner on third visit if not dismissed
   maybeShowInstallBanner();
 
-  // Hide loading after a beat
+  // Hide loading overlay after a beat (but fish has been visible the whole time)
   setTimeout(() => {
     loadingEl.classList.add('fade-out');
     setTimeout(() => { loadingEl.style.display = 'none'; }, 500);
-  }, 800);
-
-  // Greeting - fish says hello after 2 seconds
-  setTimeout(() => {
-    speech.show('glub!', { type: 'fish', duration: 3 });
-    fsm.transition(STATES.HAPPY, { duration: 2, priority: 2 });
-  }, 2000);
+  }, 400);
 }
 
 document.addEventListener('DOMContentLoaded', init);
