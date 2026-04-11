@@ -6,55 +6,78 @@
  */
 
 // ============================================================
-// Palette
+// Dynamic palette - day/night cycle based on local time
 // ============================================================
-const P = {
-  bg:     '#080e1c',
-  bgL:    '#0c1428',
+// 4 anchor palettes. Render blends between them based on hour.
+// Water + bg + glass + foam change; gravel/plants/rocks stay static.
 
-  // Water - 6 shades for smooth depth transitions
-  w1:     '#3690b0',  // brightest (near surface)
-  w2:     '#2c7c9c',
-  w3:     '#247088',
-  w4:     '#1c5e74',
-  w5:     '#164e64',
-  w6:     '#103e50',  // deepest
-
-  // Water specular
-  ws:     '#48a8c8',
-  wd:     '#0c3040',  // deep shadow
-
-  // Glass
-  gl:     '#14384e',
-  glH:    '#2a6884',
-  glR:    '#1c4c66',  // rim
-
-  // Gravel
-  g1:     '#6e5c3a',
-  g2:     '#5a4a2c',
-  g3:     '#826a48',
-  g4:     '#4a3c22',
-  gH:     '#96845c',  // highlight pebble
-
-  // Sand transition
-  sand:   '#8a7a56',
-  sandD:  '#6a5c3a',
-
-  // Plants
-  p1:     '#185828',
-  p2:     '#247838',
-  p3:     '#34a050',
-  p4:     '#1a6830',
-
-  // Decorations
-  rock:   '#3a3a44',
-  rockL:  '#4e4e58',
-  rockD:  '#2a2a32',
-
-  // Surface
-  foam:   '#4aa0be',
-  foamH:  '#68bcd8',
+const PALETTES = {
+  morning: { // 6-10: bright cool blue
+    bg: '#0a1628', bgL: '#0e1a30',
+    w1: '#4aacc8', w2: '#3c98b4', w3: '#3084a0', w4: '#24708c', w5: '#1c5c78', w6: '#144864',
+    ws: '#5ac0dc', wd: '#0e3848',
+    gl: '#164668', glH: '#3a98b8', glR: '#1c5478',
+    foam: '#5ab4cc', foamH: '#7acce0',
+  },
+  day: { // 10-16: standard daylight (current palette)
+    bg: '#080e1c', bgL: '#0c1428',
+    w1: '#3690b0', w2: '#2c7c9c', w3: '#247088', w4: '#1c5e74', w5: '#164e64', w6: '#103e50',
+    ws: '#48a8c8', wd: '#0c3040',
+    gl: '#14384e', glH: '#2a6884', glR: '#1c4c66',
+    foam: '#4aa0be', foamH: '#68bcd8',
+  },
+  evening: { // 16-20: warm golden-sunset tint
+    bg: '#140e1c', bgL: '#181428',
+    w1: '#4c7ca0', w2: '#406c8c', w3: '#345c78', w4: '#284c64', w5: '#1e3e54', w6: '#123044',
+    ws: '#5e90b4', wd: '#0c2c40',
+    gl: '#16304a', glH: '#3a5e7e', glR: '#1c425e',
+    foam: '#4c84a8', foamH: '#649cc0',
+  },
+  night: { // 20-6: deep dark moody blue
+    bg: '#04080f', bgL: '#060a18',
+    w1: '#1e4664', w2: '#163c58', w3: '#12324c', w4: '#0e2a40', w5: '#0a2234', w6: '#061828',
+    ws: '#2c688c', wd: '#04162a',
+    gl: '#0a1e38', glH: '#1c4670', glR: '#102844',
+    foam: '#2e5e7e', foamH: '#407898',
+  },
 };
+
+const STATIC_COLORS = {
+  g1: '#6e5c3a', g2: '#5a4a2c', g3: '#826a48', g4: '#4a3c22', gH: '#96845c',
+  sand: '#8a7a56', sandD: '#6a5c3a',
+  p1: '#185828', p2: '#247838', p3: '#34a050', p4: '#1a6830',
+  rock: '#3a3a44', rockL: '#4e4e58', rockD: '#2a2a32',
+};
+
+/** Blend two hex colors. t=0 -> a, t=1 -> b. */
+function blendHex(a, b, t) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const ar = (pa >> 16) & 255, ag = (pa >> 8) & 255, ab = pa & 255;
+  const br = (pb >> 16) & 255, bg = (pb >> 8) & 255, bb = pb & 255;
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const bl = Math.round(ab + (bb - ab) * t);
+  return '#' + ((r << 16) | (g << 8) | bl).toString(16).padStart(6, '0');
+}
+
+/** Get blended palette based on current local hour. */
+function getCurrentPalette() {
+  const h = new Date().getHours() + new Date().getMinutes() / 60;
+  let a, b, t;
+  if (h >= 6 && h < 10) { a = PALETTES.morning; b = PALETTES.day; t = (h - 6) / 4; }
+  else if (h >= 10 && h < 16) { a = PALETTES.day; b = PALETTES.day; t = 0; }
+  else if (h >= 16 && h < 20) { a = PALETTES.day; b = PALETTES.evening; t = (h - 16) / 4; }
+  else if (h >= 20 && h < 22) { a = PALETTES.evening; b = PALETTES.night; t = (h - 20) / 2; }
+  else if (h >= 22 || h < 4)  { a = PALETTES.night; b = PALETTES.night; t = 0; }
+  else                         { a = PALETTES.night; b = PALETTES.morning; t = (h - 4) / 2; }
+
+  const out = {};
+  for (const k in a) out[k] = t === 0 ? a[k] : blendHex(a[k], b[k], t);
+  return { ...out, ...STATIC_COLORS };
+}
+
+// Live palette, recomputed in render() so day/night cycles while open.
+let P = { ...PALETTES.day, ...STATIC_COLORS };
 
 // ============================================================
 // Water tiles - richer pattern with diagonal waves + highlights
@@ -125,7 +148,7 @@ const DEEP_B = [
   [4,5,5,6,4,5,5,6],
 ];
 
-const W = [null, P.w1, P.w2, P.w3, P.w4, P.w5, P.w6];
+let W = [null, P.w1, P.w2, P.w3, P.w4, P.w5, P.w6];
 
 // Gravel tile
 const GR = [
@@ -138,7 +161,7 @@ const GR = [
   [2,1,3,1,2,1,1,2],
   [1,2,1,2,3,2,3,1],
 ];
-const GC = [null, P.g1, P.g2, P.g3, P.g4];
+const GC = [null, P.g1, P.g2, P.g3, P.g4]; // gravel is static
 
 // ============================================================
 // Bowl class
@@ -201,6 +224,15 @@ export class Bowl {
     if (this._frameTimer > 0.6) {
       this._frameTimer -= 0.6;
       this._frame = 1 - this._frame;
+    }
+
+    // Update palette every ~2 seconds based on time of day (day/night cycle)
+    this._paletteTimer = (this._paletteTimer || 0) + dt;
+    if (this._paletteTimer > 2 || !this._paletteInit) {
+      this._paletteTimer = 0;
+      this._paletteInit = true;
+      P = getCurrentPalette();
+      W = [null, P.w1, P.w2, P.w3, P.w4, P.w5, P.w6];
     }
 
     const w = this._canvas.width;

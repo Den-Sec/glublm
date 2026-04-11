@@ -20,6 +20,27 @@ export class FishMovement {
     this._bobPhase = Math.random() * Math.PI * 2;
     this._bobOffset = 0;
     this._movementScale = 1; // can slow down for states like sleep
+
+    // Cursor tracking
+    this._cursorX = null;
+    this._cursorY = null;
+    this._cursorActive = false;
+    this._cursorActiveTimer = 0;
+  }
+
+  /**
+   * Update cursor position (in canvas internal coordinates).
+   * Pass null to clear.
+   */
+  setCursor(x, y) {
+    if (x === null || y === null) {
+      this._cursorActive = false;
+      return;
+    }
+    this._cursorX = x;
+    this._cursorY = y;
+    this._cursorActive = true;
+    this._cursorActiveTimer = 0;
   }
 
   /** Pick a random target within the swim zone. */
@@ -63,6 +84,25 @@ export class FishMovement {
     // Bob animation (always active, even when paused)
     this._bobPhase += dt * 1.5;
     this._bobOffset = Math.sin(this._bobPhase) * 2;
+
+    // Cursor tracking decay - cursor "fades" after 2 seconds of no movement
+    if (this._cursorActive) {
+      this._cursorActiveTimer += dt;
+      if (this._cursorActiveTimer > 2) {
+        this._cursorActive = false;
+      }
+    }
+
+    // If cursor is active and within swim zone, subtly drift the target toward it
+    // The fish gets curious about cursor proximity
+    if (this._cursorActive && this._movementScale > 0.5) {
+      const swim = this._bowl.getSwimBounds();
+      if (this._bowl.isInSwimBounds(this._cursorX, this._cursorY)) {
+        // Blend target toward cursor (30% weight = subtle interest, not aggressive follow)
+        this._targetX = this._targetX * 0.97 + this._cursorX * 0.03;
+        this._targetY = this._targetY * 0.97 + this._cursorY * 0.03;
+      }
+    }
 
     // Handle pause
     if (this._paused) {
@@ -116,4 +156,19 @@ export class FishMovement {
   }
 
   get isPaused() { return this._paused; }
+
+  /**
+   * Get the "look at" direction - returns a normalized (dx, dy) vector for
+   * where the fish eye should look. Returns null if not tracking cursor.
+   * @returns {null | { dx: number, dy: number }}
+   */
+  getEyeLook() {
+    if (!this._cursorActive) return null;
+    const dx = this._cursorX - this._x;
+    const dy = this._cursorY - this._y;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d < 1) return null;
+    return { dx: dx / d, dy: dy / d };
+  }
 }
+

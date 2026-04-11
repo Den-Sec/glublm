@@ -14,7 +14,16 @@ export class SpeechBubble {
     this._duration = 5;
     this._phase = 'hidden';
     this._type = 'fish';
+    this._lastBubbleRect = null; // { cx, cy, w, h } in screen px, set on render
+    this._onFadeOutStart = null;
+    this._fadeOutFired = false;
   }
+
+  /** Register a callback fired once when the bubble transitions to fadeOut. */
+  onFadeOutStart(fn) { this._onFadeOutStart = fn; }
+
+  /** Last rendered bubble rect in screen coordinates. */
+  get lastRect() { return this._lastBubbleRect; }
 
   show(text, { duration, type = 'fish' } = {}) {
     this._text = text;
@@ -25,10 +34,22 @@ export class SpeechBubble {
     this._opacity = 0;
     this._timer = 0;
     this._visible = true;
+    this._fadeOutFired = false;
   }
 
   dismiss() {
     if (this._visible) this._phase = 'fadeOut';
+  }
+
+  /** Get the current quote text (empty string if nothing visible). */
+  get text() { return this._visible && this._phase === 'visible' ? this._text : ''; }
+
+  /** Get the type of the current bubble ('fish' | 'user'). */
+  get type() { return this._type; }
+
+  /** True only when the fish is speaking (not user bubble) and bubble is visible. */
+  get isFishSpeaking() {
+    return this._visible && this._type === 'fish' && this._text.length > 0;
   }
 
   update(dt) {
@@ -40,7 +61,13 @@ export class SpeechBubble {
         break;
       case 'visible':
         this._timer += dt;
-        if (this._timer >= this._duration) this._phase = 'fadeOut';
+        if (this._timer >= this._duration) {
+          this._phase = 'fadeOut';
+          if (this._onFadeOutStart && !this._fadeOutFired && this._type === 'fish') {
+            this._fadeOutFired = true;
+            this._onFadeOutStart(this._lastBubbleRect, this._text);
+          }
+        }
         break;
       case 'fadeOut':
         this._opacity = Math.max(0, this._opacity - dt * 1.5);
@@ -97,6 +124,9 @@ export class SpeechBubble {
     }
     bx = Math.round(Math.max(px * 2, Math.min(screenW - boxW - px * 2, bx)) / px) * px;
     by = Math.round(Math.max(px * 2, by) / px) * px;
+
+    // Remember rect for dissolve particles (in screen coords)
+    this._lastBubbleRect = { cx: bx + boxW / 2, cy: by + boxH / 2, w: boxW, h: boxH };
 
     // Pointer position (snapped)
     const ptrX = Math.round(Math.max(bx + px * 4, Math.min(bx + boxW - px * 4, fishScreenX)) / px) * px;

@@ -7,6 +7,7 @@
 import { CanvasManager } from './engine/canvas.js';
 import { Bowl } from './engine/bowl.js';
 import { BubbleSystem, SplashSystem } from './engine/bubbles.js';
+import { DissolveSystem } from './engine/dissolve.js';
 import { SpriteEngine } from './engine/sprites.js';
 import { FishMovement } from './engine/movement.js';
 import { FishStateMachine, STATES } from './engine/state-machine.js';
@@ -17,7 +18,7 @@ import { OnnxModel } from './inference/model.js';
 // ============================================================
 // Systems
 // ============================================================
-let canvas, bowl, bubbles, splash, sprites, movement, fsm, speech, idle, model;
+let canvas, bowl, bubbles, splash, sprites, movement, fsm, speech, idle, model, dissolve;
 let lastInteractionTime = performance.now();
 let randomEventTimer = 0;
 let nextRandomEvent = 8 + Math.random() * 15;
@@ -147,6 +148,16 @@ let clickTimer = null;
 
 function setupInput() {
   const el = canvas.el;
+
+  // Cursor tracking - fish looks at mouse when hovering near the bowl
+  el.addEventListener('pointermove', (e) => {
+    const pos = canvas.screenToInternal(e.clientX, e.clientY);
+    movement.setCursor(pos.x, pos.y);
+  });
+
+  el.addEventListener('pointerleave', () => {
+    movement.setCursor(null, null);
+  });
 
   el.addEventListener('pointerdown', (e) => {
     e.preventDefault();
@@ -358,6 +369,7 @@ function render(dt) {
   bubbles.update(dt);
   splash.update(dt);
   speech.update(dt);
+  dissolve.update(dt);
 
   // Spiral override
   if (spiralActive) {
@@ -422,7 +434,7 @@ function render(dt) {
   bowl.render(ctx, dt);
   bubbles.render(ctx);
   const fs = getFishSize();
-  sprites.render(ctx, movement.x, movement.y, fs, !movement.facingRight);
+  sprites.render(ctx, movement.x, movement.y, fs, !movement.facingRight, movement.getEyeLook());
   splash.render(ctx);
 
   // Blit to screen
@@ -431,6 +443,12 @@ function render(dt) {
   // Speech bubble at screen resolution (after present)
   const fishScreen = canvas.internalToScreen(movement.x, movement.y);
   speech.render(canvas.screenCtx, fishScreen.x, fishScreen.y, canvas.screenWidth, canvas.screenHeight);
+
+  // Dissolve particles - rendered on screen ctx AFTER speech bubble
+  // (so they appear as the words dispersing into the water)
+  if (dissolve.hasParticles) {
+    dissolve.render(canvas.screenCtx);
+  }
 }
 
 // ============================================================
@@ -480,7 +498,16 @@ async function init() {
   movement = new FishMovement(bowl);
   fsm = new FishStateMachine(sprites, movement);
   speech = new SpeechBubble();
+  dissolve = new DissolveSystem();
   idle = new IdleScheduler(speech, fsm);
+
+  // When a fish bubble fades out, burst dissolve particles from its rect
+  // - this visualizes the "forgetting" concept every time the fish speaks
+  speech.onFadeOutStart((rect) => {
+    if (rect) {
+      dissolve.burst(rect.cx, rect.cy, rect.w, rect.h, 18);
+    }
+  });
   model = new OnnxModel();
 
   setupInput();

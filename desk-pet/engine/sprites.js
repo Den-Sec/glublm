@@ -401,8 +401,9 @@ export class SpriteEngine {
    * @param {number} y - center Y
    * @param {number} size - rendered size (e.g., 128)
    * @param {boolean} flipX - flip horizontally
+   * @param {{ dx: number, dy: number } | null} [eyeLook] - normalized vector where the eye should look
    */
-  render(ctx, x, y, size, flipX = false) {
+  render(ctx, x, y, size, flipX = false, eyeLook = null) {
     const frame = this._getFrame(this._currentAnim, this._frameIdx);
     const half = size / 2;
 
@@ -412,6 +413,63 @@ export class SpriteEngine {
     if (flipX) ctx.scale(-1, 1);
     ctx.drawImage(frame, -half, -half, size, size);
     ctx.restore();
+
+    // Eye overlay with cursor tracking - only on states where the eye is open
+    // and visible. Skip sleep/sad/some states.
+    const eyeStates = ['idle_swim', 'talk', 'happy', 'excited', 'wiggle', 'bubble_blow', 'forget', 'bump_glass'];
+    if (eyeLook && eyeStates.includes(this._currentAnim)) {
+      this._renderEyeOverlay(ctx, x, y, size, flipX, eyeLook);
+    }
+  }
+
+  /**
+   * Draw an eye overlay with cursor tracking.
+   * The base sprite has a 2x2 eye block at sprite coords (10-11, 6-7) with
+   * the white highlight at (11, 6). We overdraw the whole eye area with
+   * black (wiping the highlight) and place a 1 game-pixel white highlight
+   * at a position that depends on the cursor direction - simulating the
+   * eye looking at the cursor.
+   *
+   * When the fish is flipped (facing left), the eye is mirrored to
+   * sprite coords (4-5, 6-7).
+   */
+  _renderEyeOverlay(ctx, x, y, size, flipX, eyeLook) {
+    const pxScale = size / CELL;
+    const pxSize = Math.max(1, Math.round(pxScale));
+
+    // Eye block origin in sprite coords (2x2 block)
+    // Facing right: eye at (10, 6). Facing left: mirrored to (4, 6).
+    // Sprite center is at 8,8 so relative = (10-8, 6-8) = (2, -2) for right-facing
+    const eyeLocalX = flipX ? (4 - 8) : (10 - 8);   // -4 or +2
+    const eyeLocalY = 6 - 8;                         // -2
+
+    // Canvas coords of eye top-left (first of the 2x2 block)
+    const eyeX = Math.round(x + eyeLocalX * pxScale);
+    const eyeY = Math.round(y + eyeLocalY * pxScale);
+
+    // Draw 2x2 black block (wipes the white highlight)
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(eyeX, eyeY, pxSize * 2, pxSize * 2);
+
+    // Determine which corner gets the white highlight based on cursor direction
+    // dx/dy are normalized (-1 to 1). When facing left, dx direction is flipped
+    // in the sprite's local frame (because the sprite is mirrored).
+    const localDx = flipX ? -eyeLook.dx : eyeLook.dx;
+    const localDy = eyeLook.dy;
+
+    // Pick corner: right half if localDx > 0, bottom half if localDy > 0
+    // But we BIAS the default toward upper-right (as the base sprite shows)
+    // Threshold for moving the pupil
+    let hX = 1;  // default right
+    let hY = 0;  // default top
+    if (localDx < -0.25) hX = 0;
+    else if (localDx > 0.25) hX = 1;
+    if (localDy > 0.25) hY = 1;
+    else if (localDy < -0.25) hY = 0;
+
+    // Draw 1 game-pixel white highlight at the selected corner
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(eyeX + hX * pxSize, eyeY + hY * pxSize, pxSize, pxSize);
   }
 
   get currentAnimation() { return this._currentAnim; }
