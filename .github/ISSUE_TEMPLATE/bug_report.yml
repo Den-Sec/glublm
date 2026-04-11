@@ -1,0 +1,74 @@
+name: Bug report
+description: Something is broken
+title: "[bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. The goldfish is concerned but won't remember this tomorrow.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Which part of GlubLM?
+      options:
+        - Desk Pet (browser PWA)
+        - Simple browser demo
+        - Python package (glublm CLI)
+        - Training code
+        - Dataset generation
+        - HuggingFace Space
+        - Model output quality
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: A clear description of the bug
+      placeholder: When I click the fish, instead of wiggling, it flies into orbit and crashes my tab.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened
+      placeholder: The fish should wiggle and then resume swimming.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser + version + OS (for desk pet), or Python version + OS (for package)
+      placeholder: Chrome 120 on Windows 11 / Python 3.12 on Ubuntu 22.04
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors
+      description: Browser DevTools console errors, or Python stack trace
+      render: shell
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots (optional)
+      description: Drag and drop images here if relevant

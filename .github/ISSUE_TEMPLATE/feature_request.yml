@@ -1,0 +1,51 @@
+name: Feature request
+description: Propose something new
+title: "[feature] "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Note: for major changes, please discuss here first before writing code.
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - Desk Pet (browser PWA)
+        - Python package
+        - Training / dataset
+        - Documentation
+        - New integration or port (Raspberry Pi, ESP32, mobile, etc.)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      placeholder: The goldfish never looks at the camera. I wish it would make eye contact when I click it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      placeholder: Add an "eye tracking" state to the FSM that briefly rotates the fish to face the click position.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered (optional)
+
+  - type: checkboxes
+    id: persona
+    attributes:
+      label: Persona check
+      description: Does this change stay in-character?
+      options:
+        - label: This feature/dataset/phrase keeps the goldfish naive, forgetful, and present-moment focused
+        - label: This feature does not introduce references to football, coaches, Ted Lasso characters, or the real world beyond the bowl
