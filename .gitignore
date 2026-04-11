@@ -70,3 +70,7 @@ wandb/
 
 # HuggingFace cache
 .cache/
+
+# Launch materials (private, not tracked)
+LAUNCH_KIT.md
+_launch/
