@@ -72,7 +72,7 @@ Everything is free, open source, and runs locally or in your browser. No sign-up
 
 ### What it does
 
-- **Pixel-art goldfish** in a GBA-style fishbowl rendered on HTML canvas. 240x... internal buffer, nearest-neighbor upscale. 8x8 water tile patterns with 2-frame swap animation (the way Pokemon actually renders water). 3 depth zones, dithered refraction shadows, caustic light patterns on the gravel, 4 swaying plants.
+- **Pixel-art goldfish** in a GBA-style fishbowl rendered on HTML canvas. 240px-wide internal buffer, nearest-neighbor upscale to your viewport. 8x8 water tile patterns with 2-frame swap animation (the way Pokemon actually renders water). 3 depth zones, dithered refraction shadows, caustic light patterns on the gravel, 4 swaying plants.
 - **12 animation states**: idle swim, talk, happy, sad, sleep, eat, bump glass, forget, excited, wiggle, bubble blow, turn around. Sprites are procedurally generated at 16x16 so every pixel is intentional.
 - **530 hand-curated idle phrases** in 13 time-aware categories. The goldfish is different in the morning than at night. It gets bored if you ignore it. It gets philosophical at random.
 - **Real chat with the model**. When you type something, the fish swims to the center, thinks for 1-3 seconds (ONNX Runtime Web on WASM), and speaks back. Then it forgets everything you both just said.
