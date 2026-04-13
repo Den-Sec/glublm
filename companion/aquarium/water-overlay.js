@@ -8,16 +8,19 @@ export class WaterOverlay {
     this._bowl = bowl;
     this._quality = 1.0; // 0-1
     this._algaeSpots = [];
+    this._algaeGenAt = -1; // quality level when algae were last generated
   }
 
   /** Set water quality (0 = filthy, 1 = pristine). */
   setQuality(q) {
     this._quality = Math.max(0, Math.min(1, q));
-    // Regenerate algae when quality changes significantly
-    if (this._quality < 0.4) {
-      this._generateAlgae();
-    } else {
+    if (this._quality >= 0.4) {
       this._algaeSpots = [];
+      this._algaeGenAt = -1;
+    } else if (this._algaeGenAt < 0 || Math.abs(this._quality - this._algaeGenAt) > 0.08) {
+      // Only regenerate when quality changes by >8% or first time below 40%
+      this._generateAlgae();
+      this._algaeGenAt = this._quality;
     }
   }
 
