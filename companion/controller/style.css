@@ -54,6 +54,16 @@ html, body {
   letter-spacing: 1px;
 }
 
+#status-indicator.critical {
+  color: #e04040;
+  animation: pulse-red-text 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-red-text {
+  0%, 100% { color: #e04040; }
+  50% { color: #ff6060; }
+}
+
 /* --- Quote Box --- */
 
 #quote-box {
@@ -74,6 +84,12 @@ html, body {
 #quote-box.mood-critical {
   border-left-color: #e04040;
   background: rgba(224, 64, 64, 0.08);
+  animation: pulse-red 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-red {
+  0%, 100% { border-left-color: #e04040; }
+  50% { border-left-color: #ff6060; box-shadow: 0 0 8px rgba(224, 64, 64, 0.3); }
 }
 
 #fish-quote {
@@ -120,7 +136,7 @@ html, body {
 .stat-fill {
   height: 100%;
   width: 2%;
-  transition: width 0.4s ease;
+  transition: width 0.5s ease;
   position: relative;
   border-radius: 1px;
 }

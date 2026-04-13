@@ -31,13 +31,22 @@ function renderStats() {
   setBar('hunger', state.hunger);
   setBar('water', state.cleanliness);
   setBar('happy', state.happiness);
+  setBar('health', state.health);
   setBar('bond', state.bond);
+
+  const nameEl = document.getElementById('fish-name');
+  if (state.fishName) nameEl.textContent = state.ageDays !== undefined ? `${state.fishName} - day ${state.ageDays}` : state.fishName;
 
   const dayText = state.ageDays !== undefined ? `day ${state.ageDays}` : '';
   const indicator = document.getElementById('status-indicator');
-  if (state.isBellyUp) indicator.textContent = 'CRITICAL';
-  else if (state.hunger < 30 || state.cleanliness < 30) indicator.textContent = 'needs attention';
-  else indicator.textContent = dayText;
+  if (state.isBellyUp) {
+    indicator.textContent = 'CRITICAL';
+    indicator.classList.add('critical');
+  } else {
+    indicator.classList.remove('critical');
+    if (state.hunger < 30 || state.cleanliness < 30) indicator.textContent = 'needs attention';
+    else indicator.textContent = dayText;
+  }
 }
 
 function setBar(id, value) {
@@ -63,11 +72,12 @@ function renderQuote(text, mood) {
 
 function renderActions() {
   const container = document.getElementById('actions');
+  const poopCount = state.poops?.length || 0;
   const actions = [
     { id: 'feed', label: 'feed', urgency: state.hunger < 30 ? (state.hunger < 15 ? 2 : 1) : 0 },
     { id: 'clean', label: 'clean water', urgency: state.cleanliness < 30 ? (state.cleanliness < 20 ? 2 : 1) : 0 },
     { id: 'play', label: 'play', urgency: 0 },
-    { id: 'poop', label: 'clean poop', urgency: (state.poops?.length || 0) > 2 ? 1 : 0 },
+    { id: 'poop', label: `clean poop${poopCount > 0 ? ` (${poopCount})` : ''}`, urgency: poopCount > 2 ? 1 : 0 },
   ];
 
   actions.sort((a, b) => b.urgency - a.urgency);
