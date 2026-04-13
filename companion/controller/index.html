@@ -1,7 +1,53 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Glub Controller</title></head>
-<body style="background:#0c1e30;color:#c0e4f4;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
-  <p>controller - phase 4</p>
+<head>
+  <meta charset="utf-8" />
+  <title>Glub Controller</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header id="header">
+      <span id="fish-name">glub</span>
+      <span id="status-indicator">connecting...</span>
+    </header>
+
+    <div id="quote-box">
+      <p id="fish-quote">...</p>
+    </div>
+
+    <div id="stats">
+      <div class="stat-row">
+        <span class="stat-label">hunger</span>
+        <div class="stat-bar"><div id="bar-hunger" class="stat-fill"></div></div>
+        <span id="val-hunger" class="stat-val">-</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">water</span>
+        <div class="stat-bar"><div id="bar-water" class="stat-fill"></div></div>
+        <span id="val-water" class="stat-val">-</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">happiness</span>
+        <div class="stat-bar"><div id="bar-happy" class="stat-fill"></div></div>
+        <span id="val-happy" class="stat-val">-</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">bond</span>
+        <div class="stat-bar"><div id="bar-bond" class="stat-fill bond"></div></div>
+        <span id="val-bond" class="stat-val">-</span>
+      </div>
+    </div>
+
+    <div id="actions"></div>
+
+    <div id="chat-input">
+      <input id="prompt" type="text" placeholder="say something to the goldfish..." autocomplete="off" />
+      <button id="send" type="button">&gt;</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
