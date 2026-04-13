@@ -40,7 +40,7 @@ let chatBusy = false;
 // DOM refs
 let promptEl, sendEl, chatInputEl, loadingEl, statusEl, progressEl;
 let settingsBtn, settingsPanel, settingsClose, notifFreqEl, fishNameEl;
-let installBanner, installBtn, installDismiss;
+let installBanner, installBtn, installDismiss, iosInstallBanner, iosInstallDismiss;
 
 /** Update the load progress bar + status text. */
 function updateProgress(pct, label) {
@@ -303,10 +303,28 @@ function setupInstallPrompt() {
   });
 }
 
+function isIos() {
+  return /iP(hone|ad|od)/.test(navigator.userAgent) && !window.navigator.standalone;
+}
+
 function maybeShowInstallBanner() {
   if (SETTINGS.installed || SETTINGS.installDismissed) return;
+
+  // iOS: beforeinstallprompt doesn't exist, show manual instructions
+  if (isIos()) {
+    iosInstallDismiss.addEventListener('click', () => {
+      iosInstallBanner.classList.add('hidden');
+      SETTINGS.installDismissed = true;
+      localStorage.setItem('glub_install_dismissed', '1');
+    });
+    setTimeout(() => {
+      iosInstallBanner.classList.remove('hidden');
+    }, 15000);
+    return;
+  }
+
+  // Chromium: use beforeinstallprompt API
   if (!deferredInstallPrompt) return;
-  // Show after 15 seconds (give user time to see the fish first)
   setTimeout(() => {
     if (deferredInstallPrompt) installBanner.classList.remove('hidden');
   }, 15000);
@@ -484,6 +502,8 @@ async function init() {
   installBanner = document.getElementById('install-banner');
   installBtn = document.getElementById('install-btn');
   installDismiss = document.getElementById('install-dismiss');
+  iosInstallBanner = document.getElementById('ios-install-banner');
+  iosInstallDismiss = document.getElementById('ios-install-dismiss');
 
   // -----------------------------------------------------------
   // PRIORITY ZERO: get the fish rendering on screen ASAP.

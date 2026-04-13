@@ -18,11 +18,19 @@ weights_path = hf_hub_download(REPO_ID, "model.safetensors")
 tok_path = hf_hub_download(REPO_ID, "tokenizer.json")
 
 tok = GlubTokenizer.from_file(tok_path)
-cfg = ModelConfig(vocab_size=tok.vocab_size)
+# HF model repo has 18M weights - override defaults to match
+cfg = ModelConfig(
+    vocab_size=tok.vocab_size,
+    d_model=448,
+    n_layers=8,
+    n_heads=7,
+    ffn_hidden=896,
+    max_seq_len=48,
+)
 model = GlubLM(cfg)
 
 state = load_file(weights_path)
-model.load_state_dict(state)
+model.load_state_dict(state, strict=False)
 model.eval()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -45,7 +53,7 @@ def chat(prompt: str, temperature: float, top_k: int, top_p: float, max_new_toke
 TAGLINE = "the language model that already forgot this sentence"
 
 with gr.Blocks(title="GlubLM") as demo:
-    gr.Markdown(f"# GlubLM\n> *{TAGLINE}*\n\nAn 18M-parameter goldfish with a 10-second memory.")
+    gr.Markdown(f"# GlubLM\n> *{TAGLINE}*\n\nAn 18M-parameter goldfish with a 10-second memory. [Try the 35M Desk Pet](https://den-sec.github.io/glublm/desk-pet/).")
     with gr.Row():
         with gr.Column():
             prompt = gr.Textbox(label="say something to the goldfish", value="hello")

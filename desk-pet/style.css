@@ -255,3 +255,38 @@ html, body {
   border-color: #cc6a1a !important;
   color: white !important;
 }
+
+/* iOS install banner */
+#ios-install-banner {
+  position: fixed;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0c1e30;
+  border: 2px solid #ff8b3d;
+  padding: 10px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #c0e4f4;
+  font-family: "Courier New", monospace;
+  font-size: 0.8rem;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
+  z-index: 15;
+  max-width: 90%;
+  text-align: left;
+  line-height: 1.4;
+}
+#ios-install-banner.hidden { display: none; }
+#ios-install-banner strong { color: #ff8b3d; }
+#ios-install-banner button {
+  padding: 4px 10px;
+  background: #122a42;
+  border: 1px solid #4a9abe;
+  color: #c0e4f4;
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#ios-install-banner button:hover { background: #1c3a52; }
