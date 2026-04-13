@@ -18,15 +18,7 @@ weights_path = hf_hub_download(REPO_ID, "model.safetensors")
 tok_path = hf_hub_download(REPO_ID, "tokenizer.json")
 
 tok = GlubTokenizer.from_file(tok_path)
-# HF model repo has 18M weights - override defaults to match
-cfg = ModelConfig(
-    vocab_size=tok.vocab_size,
-    d_model=448,
-    n_layers=8,
-    n_heads=7,
-    ffn_hidden=896,
-    max_seq_len=48,
-)
+cfg = ModelConfig(vocab_size=tok.vocab_size)
 model = GlubLM(cfg)
 
 state = load_file(weights_path)
@@ -53,7 +45,7 @@ def chat(prompt: str, temperature: float, top_k: int, top_p: float, max_new_toke
 TAGLINE = "the language model that already forgot this sentence"
 
 with gr.Blocks(title="GlubLM") as demo:
-    gr.Markdown(f"# GlubLM\n> *{TAGLINE}*\n\nAn 18M-parameter goldfish with a 10-second memory. [Try the 35M Desk Pet](https://den-sec.github.io/glublm/desk-pet/).")
+    gr.Markdown(f"# GlubLM\n> *{TAGLINE}*\n\nA 35M-parameter goldfish with a 10-second memory. [Try the Desk Pet](https://den-sec.github.io/glublm/desk-pet/).")
     with gr.Row():
         with gr.Column():
             prompt = gr.Textbox(label="say something to the goldfish", value="hello")
