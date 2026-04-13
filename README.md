@@ -208,14 +208,39 @@ Total: **~2,800 lines across 27 files**. No React, no build step, no bundler. Sa
 
 ### Quick start
 
+**Requirements:** [Node.js](https://nodejs.org/) 18 or later (check with `node --version`).
+
+**1. Clone the repo** (skip if you already have it):
+
+```bash
+git clone https://github.com/Den-Sec/glublm.git
+cd glublm
+```
+
+**2. Install and start the companion server:**
+
 ```bash
 cd companion
 npm install
 npm start
-# Aquarium:  http://localhost:3210/aquarium/
-# Controller: http://localhost:3210/controller/
-# API:        http://localhost:3210/api/state
 ```
+
+You should see:
+
+```
+[glub] Pet loaded: hunger=100.0 clean=100.0 health=100.0 bond=10.0 age=0d
+[glub] ONNX model loaded
+[glub] Companion server running on http://localhost:3210
+```
+
+**3. Open the aquarium and controller in your browser:**
+
+- **Aquarium** (put this on your monitor): [http://localhost:3210/aquarium/](http://localhost:3210/aquarium/)
+- **Controller** (open on your phone, same WiFi): `http://<your-pc-ip>:3210/controller/`
+
+To find your PC's IP for the phone, run `ipconfig` (Windows) or `ifconfig` (Mac/Linux) and look for your local address (usually `192.168.x.x`).
+
+**4. Take care of your fish.** Feed it, clean the water, play with it, chat with it. Come back tomorrow - it'll be hungry again.
 
 ## The Model
 
