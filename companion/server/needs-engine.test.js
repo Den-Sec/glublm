@@ -52,8 +52,8 @@ describe('NeedsEngine.tick', () => {
     pet.cleanliness = 80;
     const engine = new NeedsEngine(pet);
     for (let i = 0; i < 3600; i++) engine.tick(1);
-    // +2/hr recovery
-    assert.ok(pet.health > 51 && pet.health < 53, `health=${pet.health}`);
+    // +4/hr recovery
+    assert.ok(pet.health > 53 && pet.health < 55, `health=${pet.health}`);
   });
 
   it('health drops when starving', () => {

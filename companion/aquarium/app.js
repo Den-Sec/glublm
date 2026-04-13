@@ -13,9 +13,10 @@ import { SpeechBubble } from '/engine/speech.js';
 import { PoopSprites } from './poop-sprites.js';
 import { WaterOverlay } from './water-overlay.js';
 import { FoodAnimation } from './food-animation.js';
+import { PlayToy } from './play-toy.js';
 
 let canvas, bowl, bubbles, splash, sprites, movement, fsm, speech, dissolve;
-let poopSprites, waterOverlay, foodAnim;
+let poopSprites, waterOverlay, foodAnim, playToy;
 let ws = null;
 
 // Belly-up state (Task 18)
@@ -77,25 +78,43 @@ function handleMessage(msg) {
     case 'animation':
       fsm.transition(msg.state, { duration: msg.duration || 2, priority: 3 });
       break;
-    case 'feed':
-      fsm.transition(STATES.EATING, { duration: 2, priority: 3 });
+    case 'feed': {
+      fsm.transition(STATES.EATING, { duration: 3, priority: 3 });
       foodAnim.spawn(5);
-      // Fish swims toward nearest flake after a brief delay
-      setTimeout(() => {
-        const flake = foodAnim.getNearestFlake(movement.x, movement.rawY);
-        if (flake) movement.setTarget(flake.x, flake.y);
-      }, 300);
+      if (!isBellyUp) {
+        // Chase flakes while they exist
+        const chaseFeed = setInterval(() => {
+          const flake = foodAnim.getNearestFlake(movement.x, movement.y);
+          if (flake) {
+            movement.setTarget(flake.x, flake.y);
+          } else {
+            clearInterval(chaseFeed);
+          }
+        }, 500);
+      }
       break;
+    }
     case 'water_quality':
       waterOverlay.setQuality(msg.level);
       break;
     case 'water_change':
       waterOverlay.setQuality(1.0);
       break;
-    case 'play':
-      fsm.transition(STATES.EXCITED, { duration: 2, priority: 3 });
-      splash.burst(movement.x, movement.y, 12);
+    case 'play': {
+      if (isBellyUp) break; // can't play when dying
+      playToy.start();
+      fsm.transition(STATES.EXCITED, { duration: 3, priority: 3 });
+      // Chase the ball as it bounces
+      const chasePlay = setInterval(() => {
+        const pos = playToy.getPosition();
+        if (pos) {
+          movement.setTarget(pos.x, pos.y);
+        } else {
+          clearInterval(chasePlay);
+        }
+      }, 200);
       break;
+    }
     case 'belly_up':
       if (msg.active) enterBellyUp();
       else exitBellyUp();
@@ -163,6 +182,7 @@ function render(dt) {
   poopSprites.update(dt);
   waterOverlay.update(dt);
   foodAnim.update(dt);
+  playToy.update(dt);
 
   // Belly-up: slowly float toward surface
   if (isBellyUp) {
@@ -199,6 +219,7 @@ function render(dt) {
   }
 
   foodAnim.render(canvas.ctx);
+  playToy.render(canvas.ctx);
   splash.render(canvas.ctx);
 
   // Water overlay AFTER fish so tint covers everything in the bowl
@@ -248,6 +269,8 @@ function init() {
   poopSprites = new PoopSprites(bowl);
   waterOverlay = new WaterOverlay(bowl);
   foodAnim = new FoodAnimation(bowl);
+  playToy = new PlayToy(bowl);
+  playToy.setSplash(splash);
 
   speech.onFadeOutStart((rect) => {
     if (rect) dissolve.burst(rect.cx, rect.cy, rect.w, rect.h, 18);

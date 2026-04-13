@@ -14,9 +14,9 @@ describe('constants', () => {
     assert.ok(hours > 70 && hours < 100, `Expected 72-96h, got ${hours}h`);
   });
 
-  it('feed amount under 50 (so 3 feeds can overfeed)', () => {
-    assert.ok(C.FEED_AMOUNT < 50);
-    assert.ok(C.FEED_AMOUNT * C.FEED_OVERCOUNT > 100);
+  it('feed amount is reasonable (25% per feed)', () => {
+    assert.ok(C.FEED_AMOUNT >= 20 && C.FEED_AMOUNT <= 40);
+    assert.ok(C.FEED_AMOUNT * C.FEED_OVERCOUNT <= 100, '3 feeds should not exceed 100%');
   });
 
   it('all thresholds are 0-100 range', () => {

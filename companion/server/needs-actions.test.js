@@ -11,7 +11,7 @@ describe('NeedsEngine.feed', () => {
     const engine = new NeedsEngine(pet);
     const result = engine.feed();
     assert.ok(result.ok);
-    assert.equal(pet.hunger, 90);
+    assert.equal(pet.hunger, 75);
   });
 
   it('caps hunger at 100', () => {
