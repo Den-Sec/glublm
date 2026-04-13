@@ -9,9 +9,23 @@ import { FishMovement } from '/engine/movement.js';
 import { FishStateMachine, STATES } from '/engine/state-machine.js';
 import { SpeechBubble } from '/engine/speech.js';
 
+// Aquarium visual modules
+import { PoopSprites } from './poop-sprites.js';
+import { WaterOverlay } from './water-overlay.js';
+import { FoodAnimation } from './food-animation.js';
+
 let canvas, bowl, bubbles, splash, sprites, movement, fsm, speech, dissolve;
+let poopSprites, waterOverlay, foodAnim;
 let ws = null;
-let waterQuality = 1.0; // 0-1, affects water overlay
+
+// Belly-up state (Task 18)
+let isBellyUp = false;
+let bellyUpAngle = 0;       // 0 = normal, PI = fully flipped
+let bellyUpTargetY = 0;     // surface Y for floating up
+let recovering = false;     // true during flip-back animation
+
+// Bond level (Task 19)
+let bondLevel = 'stranger';
 
 function connectWs() {
   const url = `ws://${location.host}`;
@@ -32,15 +46,21 @@ function connectWs() {
 function handleMessage(msg) {
   switch (msg.type) {
     case 'full_state':
-      waterQuality = (msg.cleanliness || 100) / 100;
-      if (msg.isBellyUp) fsm.transition(STATES.SAD, { duration: Infinity, priority: 0 });
+      waterOverlay.setQuality((msg.cleanliness || 100) / 100);
+      if (msg.isBellyUp) enterBellyUp();
+      else if (isBellyUp) exitBellyUp();
+      // Bond behavior on connect (Task 19)
+      if (msg.bondLevel) {
+        bondLevel = msg.bondLevel;
+        applyBondBehavior();
+      }
       break;
     case 'needs_update':
-      waterQuality = (msg.cleanliness || 100) / 100;
-      if (msg.isBellyUp && fsm.currentState !== STATES.SAD) {
-        fsm.transition(STATES.SAD, { duration: Infinity, priority: 0 });
-      } else if (!msg.isBellyUp && fsm.currentState === STATES.SAD) {
-        fsm.transition(STATES.HAPPY, { duration: 3, priority: 3 });
+      waterOverlay.setQuality((msg.cleanliness || 100) / 100);
+      if (msg.isBellyUp && !isBellyUp) {
+        enterBellyUp();
+      } else if (!msg.isBellyUp && isBellyUp) {
+        exitBellyUp();
       }
       break;
     case 'speech':
@@ -54,22 +74,68 @@ function handleMessage(msg) {
       break;
     case 'feed':
       fsm.transition(STATES.EATING, { duration: 2, priority: 3 });
-      // Food flakes handled by food-animation.js (Task 17)
+      foodAnim.spawn(5);
+      // Fish swims toward nearest flake after a brief delay
+      setTimeout(() => {
+        const flake = foodAnim.getNearestFlake(movement.x, movement.rawY);
+        if (flake) movement.setTarget(flake.x, flake.y);
+      }, 300);
       break;
     case 'water_quality':
-      waterQuality = msg.level;
+      waterOverlay.setQuality(msg.level);
       break;
     case 'water_change':
-      waterQuality = 1.0;
+      waterOverlay.setQuality(1.0);
       break;
     case 'play':
       fsm.transition(STATES.EXCITED, { duration: 2, priority: 3 });
       splash.burst(movement.x, movement.y, 12);
       break;
     case 'belly_up':
-      if (msg.active) fsm.transition(STATES.SAD, { duration: Infinity, priority: 0 });
-      else fsm.transition(STATES.HAPPY, { duration: 3, priority: 3 });
+      if (msg.active) enterBellyUp();
+      else exitBellyUp();
       break;
+    case 'poop':
+      poopSprites.handleMessage(msg);
+      break;
+  }
+}
+
+// --- Belly-up helpers (Task 18) ---
+
+function enterBellyUp() {
+  isBellyUp = true;
+  recovering = false;
+  const swim = bowl.getSwimBounds();
+  bellyUpTargetY = swim.cy - swim.ry * 0.8; // near surface
+  fsm.transition(STATES.SAD, { duration: Infinity, priority: 0 });
+  movement.slowDown();
+}
+
+function exitBellyUp() {
+  isBellyUp = false;
+  recovering = true;
+  // Recovery: 2-second flip-back animation
+  setTimeout(() => { recovering = false; }, 2000);
+  fsm.transition(STATES.HAPPY, { duration: 3, priority: 3 });
+  movement.unfreeze();
+}
+
+// --- Bond behavior (Task 19) ---
+
+function applyBondBehavior() {
+  const swim = bowl.getSwimBounds();
+  switch (bondLevel) {
+    case 'stranger':
+      // Retreat toward castle area (center-bottom, behind castle)
+      movement.setTarget(swim.cx, swim.cy + swim.ry * 0.6);
+      movement.pause(2);
+      break;
+    case 'bonded':
+      // Excited wiggle on connect
+      fsm.transition(STATES.EXCITED, { duration: 2, priority: 3 });
+      break;
+    // 'familiar' and 'comfortable': no special action
   }
 }
 
@@ -89,28 +155,51 @@ function render(dt) {
   speech.update(dt);
   dissolve.update(dt);
   movement.update(dt);
+  poopSprites.update(dt);
+  waterOverlay.update(dt);
+  foodAnim.update(dt);
+
+  // Belly-up: slowly float toward surface
+  if (isBellyUp) {
+    const dy = bellyUpTargetY - movement.rawY;
+    if (Math.abs(dy) > 1) {
+      movement.setTarget(movement.x + (Math.random() - 0.5) * 3, bellyUpTargetY);
+    }
+    // Rotate toward upside-down
+    bellyUpAngle = Math.min(Math.PI, bellyUpAngle + dt * 1.5);
+  } else if (recovering) {
+    // Rotate back to normal
+    bellyUpAngle = Math.max(0, bellyUpAngle - dt * (Math.PI / 2));
+  }
 
   // Render to pixel buffer
   bowl.render(canvas.ctx, dt);
+  poopSprites.render(canvas.ctx);
   bubbles.render(canvas.ctx);
+  waterOverlay.render(canvas.ctx);
 
-  // Water quality overlay (dirty water tinting)
-  if (waterQuality < 0.8) {
-    const alpha = (1 - waterQuality) * 0.4; // max 0.4 opacity when fully dirty
+  // Fish rendering with belly-up rotation (Task 18)
+  const fs = getFishSize();
+  const fishX = movement.x;
+  const fishY = movement.y;
+
+  if (bellyUpAngle > 0.01) {
     canvas.ctx.save();
-    canvas.ctx.globalAlpha = alpha;
-    canvas.ctx.fillStyle = waterQuality < 0.3 ? '#2a3a10' : '#1a2a18';
-    canvas.ctx.fillRect(0, 0, canvas.width, canvas.height);
+    canvas.ctx.translate(fishX, fishY);
+    canvas.ctx.rotate(bellyUpAngle);
+    canvas.ctx.translate(-fishX, -fishY);
+    sprites.render(canvas.ctx, fishX, fishY, fs, !movement.facingRight, movement.getEyeLook());
     canvas.ctx.restore();
+  } else {
+    sprites.render(canvas.ctx, fishX, fishY, fs, !movement.facingRight, movement.getEyeLook());
   }
 
-  const fs = getFishSize();
-  sprites.render(canvas.ctx, movement.x, movement.y, fs, !movement.facingRight, movement.getEyeLook());
+  foodAnim.render(canvas.ctx);
   splash.render(canvas.ctx);
 
   canvas.present();
 
-  const fishScreen = canvas.internalToScreen(movement.x, movement.y);
+  const fishScreen = canvas.internalToScreen(fishX, fishY);
   speech.render(canvas.screenCtx, fishScreen.x, fishScreen.y, canvas.screenWidth, canvas.screenHeight);
 
   if (dissolve.hasParticles) dissolve.render(canvas.screenCtx);
@@ -149,6 +238,9 @@ function init() {
   fsm = new FishStateMachine(sprites, movement);
   speech = new SpeechBubble();
   dissolve = new DissolveSystem();
+  poopSprites = new PoopSprites(bowl);
+  waterOverlay = new WaterOverlay(bowl);
+  foodAnim = new FoodAnimation(bowl);
 
   speech.onFadeOutStart((rect) => {
     if (rect) dissolve.burst(rect.cx, rect.cy, rect.w, rect.h, 18);
