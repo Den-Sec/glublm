@@ -1,26 +1,24 @@
 /**
- * Water quality overlay - progressive tinting and algae spots.
- * Extracted from app.js inline rendering for cleaner code.
+ * Water quality overlay - progressive tinting clipped to bowl ellipse,
+ * plus algae spots that scale with degradation level.
  */
 export class WaterOverlay {
   /** @param {import('/engine/bowl.js').Bowl} bowl */
   constructor(bowl) {
     this._bowl = bowl;
     this._quality = 1.0; // 0-1
-    this._algaeSpots = [];  // generated when quality drops low
-    this._lastAlgaeQuality = 1.0;
+    this._algaeSpots = [];
   }
 
   /** Set water quality (0 = filthy, 1 = pristine). */
   setQuality(q) {
     this._quality = Math.max(0, Math.min(1, q));
-    // Regenerate algae spots when crossing the 20% threshold
-    if (this._quality < 0.2 && this._lastAlgaeQuality >= 0.2) {
+    // Regenerate algae when quality changes significantly
+    if (this._quality < 0.4) {
       this._generateAlgae();
-    } else if (this._quality >= 0.2) {
+    } else {
       this._algaeSpots = [];
     }
-    this._lastAlgaeQuality = this._quality;
   }
 
   get quality() { return this._quality; }
@@ -28,51 +26,61 @@ export class WaterOverlay {
   _generateAlgae() {
     this._algaeSpots = [];
     const b = this._bowl.getBounds();
-    const count = 12 + Math.floor(Math.random() * 7);
+    // More algae as water gets dirtier: 5 at 40%, up to 40+ at 0%
+    const severity = 1 - (this._quality / 0.4); // 0 at 40%, 1 at 0%
+    const count = Math.round(5 + severity * 35);
     for (let i = 0; i < count; i++) {
-      // Place spots near the bowl rim (high edge distance)
+      // Spread algae across bowl: near rim at low severity, everywhere at high
       const angle = Math.random() * Math.PI * 2;
-      const r = 0.88 + Math.random() * 0.10; // near edge
+      const rMin = severity > 0.5 ? 0.3 : 0.6;
+      const r = rMin + Math.random() * (0.98 - rMin);
+      const size = 2 + Math.floor(Math.random() * (severity > 0.7 ? 4 : 2));
       this._algaeSpots.push({
         x: b.cx + Math.cos(angle) * b.rx * r,
         y: b.cy + Math.sin(angle) * b.ry * r,
-        size: 2 + Math.floor(Math.random() * 2),
+        size,
+        shade: Math.random() > 0.5 ? '#3a7020' : '#4a8830',
       });
     }
   }
 
-  update(/* dt */) {
-    // Static overlay - no animation
-  }
+  update(/* dt */) {}
 
   /** @param {CanvasRenderingContext2D} ctx */
   render(ctx) {
     if (this._quality >= 0.8) return;
+    const b = this._bowl.getBounds();
 
-    // Stronger overlay: up to 0.7 alpha when fully dirty
-    const alpha = (1 - this._quality) * 0.7;
+    // Clip to bowl ellipse
     ctx.save();
-    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.ellipse(b.cx, b.cy, b.rx, b.ry, 0, 0, Math.PI * 2);
+    ctx.clip();
 
-    // Progressive tint: clear -> murky green -> brown-green
-    if (this._quality < 0.2) {
-      ctx.fillStyle = '#4a4a10'; // brown-green (very dirty)
+    // Water tint overlay
+    const alpha = (1 - this._quality) * 0.6;
+    ctx.globalAlpha = alpha;
+    if (this._quality < 0.15) {
+      ctx.fillStyle = '#4a4010'; // brown-green (critical)
+    } else if (this._quality < 0.3) {
+      ctx.fillStyle = '#3a4a10'; // dark murky green
     } else if (this._quality < 0.5) {
-      ctx.fillStyle = '#2a4a10'; // dark green
+      ctx.fillStyle = '#2a3a10'; // green
     } else {
       ctx.fillStyle = '#1a2a18'; // slight murk
     }
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.restore();
+    ctx.fillRect(b.cx - b.rx, b.cy - b.ry, b.rx * 2, b.ry * 2);
 
-    // Algae spots on bowl rim when <20%
+    // Algae spots
     if (this._algaeSpots.length > 0) {
-      ctx.fillStyle = '#4a8030';
-      ctx.globalAlpha = 0.7;
+      const algaeAlpha = 0.4 + (1 - this._quality) * 0.4;
+      ctx.globalAlpha = algaeAlpha;
       for (const s of this._algaeSpots) {
-        ctx.fillRect(Math.round(s.x), Math.round(s.y), s.size + 1, s.size + 1);
+        ctx.fillStyle = s.shade;
+        ctx.fillRect(Math.round(s.x), Math.round(s.y), s.size, s.size);
       }
-      ctx.globalAlpha = 1;
     }
+
+    ctx.restore();
   }
 }

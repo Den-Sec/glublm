@@ -1,5 +1,5 @@
 /**
- * Poop sprite renderer - small brown dots on the gravel.
+ * Poop sprite renderer - small brown mounds on the gravel.
  * Handles WS poop messages: add, remove, clear.
  */
 export class PoopSprites {
@@ -10,22 +10,10 @@ export class PoopSprites {
     this._poops = new Map();
   }
 
-  /** Add a poop at normalized position. */
-  add(id, nx, ny) {
-    this._poops.set(id, { x: nx, y: ny });
-  }
+  add(id, nx, ny) { this._poops.set(id, { x: nx, y: ny }); }
+  remove(id) { this._poops.delete(id); }
+  clear() { this._poops.clear(); }
 
-  /** Remove poop by id. */
-  remove(id) {
-    this._poops.delete(id);
-  }
-
-  /** Remove all poops. */
-  clear() {
-    this._poops.clear();
-  }
-
-  /** Handle incoming WS poop message. */
   handleMessage(msg) {
     switch (msg.action) {
       case 'add': this.add(msg.id, msg.x, msg.y); break;
@@ -34,9 +22,7 @@ export class PoopSprites {
     }
   }
 
-  update(/* dt */) {
-    // Static sprites - no animation needed
-  }
+  update() {}
 
   /** @param {CanvasRenderingContext2D} ctx */
   render(ctx) {
@@ -51,14 +37,21 @@ export class PoopSprites {
       const px = Math.round(left + p.x * w);
       const py = Math.round(top + p.y * h);
 
-      // 5px brown blob: dark body with highlight and shadow
-      ctx.fillStyle = '#4a3220';
-      ctx.fillRect(px, py + 1, 5, 3);
-      ctx.fillRect(px + 1, py, 3, 5);
-      ctx.fillStyle = '#5e4232';
-      ctx.fillRect(px + 1, py + 1, 2, 1); // top highlight
+      // Rounded mound shape - natural poop look
+      // Bottom row (wide)
       ctx.fillStyle = '#3a2418';
-      ctx.fillRect(px + 2, py + 3, 2, 1); // bottom shadow
+      ctx.fillRect(px + 1, py + 4, 5, 2);
+      // Middle body
+      ctx.fillStyle = '#4a3220';
+      ctx.fillRect(px, py + 2, 7, 2);
+      // Top (narrower)
+      ctx.fillStyle = '#5a4030';
+      ctx.fillRect(px + 1, py + 1, 5, 1);
+      ctx.fillRect(px + 2, py, 3, 1);
+      // Highlight
+      ctx.fillStyle = '#6a5040';
+      ctx.fillRect(px + 2, py + 1, 1, 1);
+      ctx.fillRect(px + 4, py + 2, 1, 1);
     }
   }
 }

@@ -181,7 +181,6 @@ function render(dt) {
   bowl.render(canvas.ctx, dt);
   poopSprites.render(canvas.ctx);
   bubbles.render(canvas.ctx);
-  waterOverlay.render(canvas.ctx);
 
   // Fish rendering with belly-up rotation (Task 18)
   const fs = getFishSize();
@@ -201,6 +200,9 @@ function render(dt) {
 
   foodAnim.render(canvas.ctx);
   splash.render(canvas.ctx);
+
+  // Water overlay AFTER fish so tint covers everything in the bowl
+  waterOverlay.render(canvas.ctx);
 
   canvas.present();
 
