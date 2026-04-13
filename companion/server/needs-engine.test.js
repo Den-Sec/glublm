@@ -98,4 +98,19 @@ describe('NeedsEngine.tick', () => {
     // 50/hr decay -> should be ~0
     assert.ok(pet.interactionBonus < 2, `bonus=${pet.interactionBonus}`);
   });
+
+  it('recovers from belly-up when health >= 15', () => {
+    const pet = new PetState();
+    pet.health = 9;
+    pet.isBellyUp = true;
+    pet.hunger = 80;
+    pet.cleanliness = 80;
+    const engine = new NeedsEngine(pet);
+    const events = [];
+    engine.on('recovery', () => events.push('recovery'));
+    // 3 hours at +2/hr = +6, 9 -> 15 -> should recover
+    for (let i = 0; i < 3600 * 3; i++) engine.tick(1);
+    assert.ok(!pet.isBellyUp, 'Expected recovery');
+    assert.ok(events.length > 0, 'Expected recovery event');
+  });
 });
