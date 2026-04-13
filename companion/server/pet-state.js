@@ -15,6 +15,7 @@ export class PetState {
     this._interactionBonus = 0;
     this.poops = [];
     this.isBloated = false;
+    this.bloatedAt = 0;
     this.isBellyUp = false;
     this.createdAt = Date.now();
     this.lastInteraction = Date.now();
@@ -79,6 +80,7 @@ export class PetState {
       interactionBonus: this._interactionBonus,
       poops: this.poops,
       isBloated: this.isBloated,
+      bloatedAt: this.bloatedAt,
       isBellyUp: this.isBellyUp,
       createdAt: this.createdAt,
       lastInteraction: this.lastInteraction,

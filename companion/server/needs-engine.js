@@ -12,6 +12,7 @@ import {
   FEED_OVERWINDOW_MS, FEED_BLOAT_HAPPINESS_PENALTY,
   WATER_CHANGE_COOLDOWN_MS, PLAY_BONUS, PLAY_COOLDOWN_MS,
   POOP_DELAY_MIN_MS, POOP_DELAY_MAX_MS,
+  FEED_BLOAT_RECOVERY_MS,
 } from '../shared/constants.js';
 
 export class NeedsEngine {
@@ -87,6 +88,12 @@ export class NeedsEngine {
       this._emit('recovery', {});
     }
 
+    // --- Bloat recovery ---
+    if (pet.isBloated && Date.now() - pet.bloatedAt >= FEED_BLOAT_RECOVERY_MS) {
+      pet.isBloated = false;
+      this._emit('bloat', { active: false });
+    }
+
     // --- Poop timers ---
     const now = Date.now();
     const readyPoops = pet.pendingPoopTimers.filter(t => now >= t.scheduledAt);
@@ -124,8 +131,9 @@ export class NeedsEngine {
     pet.feedCountInWindow++;
 
     let bloated = false;
-    if (pet.feedCountInWindow >= FEED_OVERCOUNT) {
+    if (pet.feedCountInWindow > FEED_OVERCOUNT && !pet.isBloated) {
       pet.isBloated = true;
+      pet.bloatedAt = now;
       pet.interactionBonus = Math.max(0, pet.interactionBonus - FEED_BLOAT_HAPPINESS_PENALTY);
       bloated = true;
       // Extra poop from bloat

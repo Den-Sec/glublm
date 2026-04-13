@@ -36,9 +36,11 @@ describe('NeedsEngine.feed', () => {
     const pet = new PetState();
     pet.hunger = 10;
     const engine = new NeedsEngine(pet);
-    // Force 3 feeds by resetting cooldown
+    // Force 4 feeds by resetting cooldown (FEED_OVERCOUNT=3, so >3 = 4th triggers)
     engine.feed();
-    pet.lastFeedTime = 0; // reset cooldown
+    pet.lastFeedTime = 0;
+    engine.feed();
+    pet.lastFeedTime = 0;
     engine.feed();
     pet.lastFeedTime = 0;
     const result = engine.feed();
