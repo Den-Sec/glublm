@@ -7,7 +7,7 @@
 
 // Bump on any release. The model cache is versioned separately so we
 // don't force a 40 MB re-download on every code update.
-const CACHE_VERSION = 'glub-v3';
+const CACHE_VERSION = 'glub-v4';
 const CACHE_MODEL = 'glub-model-v1';
 
 const STATIC_ASSETS = [
@@ -24,6 +24,7 @@ const STATIC_ASSETS = [
   './engine/state-machine.js',
   './engine/speech.js',
   './engine/idle.js',
+  './engine/dissolve.js',
   './inference/model.js',
   './inference/tokenizer.js',
   './data/idle-phrases.json',

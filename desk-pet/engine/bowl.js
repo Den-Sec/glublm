@@ -194,8 +194,8 @@ export class Bowl {
     return {
       cx: Math.round(w / 2),
       cy: Math.round(h * 0.46),
-      rx: Math.round(size * 0.38),
-      ry: Math.round(size * 0.44),
+      rx: Math.round(size * 0.44),
+      ry: Math.round(size * 0.50),
     };
   }
 
@@ -323,6 +323,9 @@ export class Bowl {
 
     // Decorative rocks
     this._renderRocks(ctx, b);
+
+    // Castle (double-tower fortress, classic fishtank decoration)
+    this._renderCastle(ctx, b);
 
     // Glass bowl border
     this._renderGlass(ctx, b);
@@ -589,6 +592,147 @@ export class Bowl {
         ctx.fillRect(Math.round(hx), Math.round(hy), 1, 1);
       }
     }
+  }
+
+  // ============================================================
+  // Castle - double-tower fortress (classic fishtank decoration)
+  // ============================================================
+  _renderCastle(ctx, b) {
+    const gTop = b.cy + Math.round(b.ry * 0.76);
+    const castleW = 36;
+    const castleH = 34;
+    const cx = b.cx;              // centered horizontally
+    const cy = gTop - castleH + 3; // sits on gravel
+
+    // Check time for night mode (windows lit)
+    const hour = new Date().getHours();
+    const night = hour >= 20 || hour < 6;
+
+    // Palette
+    const sd = '#3a3a44';  // stone dark
+    const sm = '#56565e';  // stone mid
+    const sl = '#7a7a84';  // stone light
+    const mr = '#2a2a34';  // mortar
+    const wd = '#0c0c18';  // window dark
+    const wl = '#ffd44a';  // window lit
+    const wg = '#fff5aa';  // window glow
+    const ws = '#dd9a20';  // window warm
+    const db = '#5a3a20';  // door
+    const do_ = '#2a1810'; // door outline
+    const dh = '#7a5030';  // door highlight
+    const ha = '#ddbb44';  // handle
+    const fl = '#dd3d3d';  // flag
+    const fp = '#444444';  // flag pole
+
+    const x = Math.round(cx - castleW / 2);
+    const y = cy;
+
+    // --- Central wall (lower, between towers) ---
+    const wallTop = y + 12;
+    ctx.fillStyle = sd;
+    ctx.fillRect(x + 8, wallTop, castleW - 16, gTop - wallTop + 2);
+    ctx.fillStyle = sm;
+    ctx.fillRect(x + 9, wallTop + 1, castleW - 18, gTop - wallTop);
+
+    // Stone texture on wall
+    ctx.fillStyle = sl;
+    for (let row = 0; row < 16; row += 4) {
+      const off = (row / 4) % 2 === 0 ? 0 : 3;
+      for (let col = off; col < castleW - 18; col += 6) {
+        ctx.fillRect(x + 9 + col, wallTop + 1 + row, 1, 1);
+      }
+    }
+
+    // Wall battlements
+    ctx.fillStyle = sd;
+    for (let i = 0; i < castleW - 16; i += 4) {
+      ctx.fillRect(x + 8 + i, wallTop - 2, 2, 2);
+    }
+
+    // Gate
+    const gateX = x + castleW / 2 - 3;
+    const gateY = gTop - 8;
+    ctx.fillStyle = do_;
+    ctx.fillRect(gateX, gateY, 6, 9);
+    ctx.fillRect(gateX + 1, gateY - 1, 4, 1);
+    ctx.fillStyle = db;
+    ctx.fillRect(gateX + 1, gateY + 1, 4, 8);
+    ctx.fillStyle = dh;
+    ctx.fillRect(gateX + 1, gateY + 1, 1, 8);
+    // Portcullis bars
+    ctx.fillStyle = do_;
+    ctx.fillRect(gateX + 2, gateY + 1, 1, 7);
+    ctx.fillRect(gateX + 4, gateY + 1, 1, 7);
+
+    // --- Left tower ---
+    this._drawTower(ctx, x, y, 10, gTop - y + 2, night, fl, fp, sd, sm, sl, mr, wd, wl, wg, ws);
+
+    // --- Right tower ---
+    this._drawTower(ctx, x + castleW - 10, y, 10, gTop - y + 2, night, fl, fp, sd, sm, sl, mr, wd, wl, wg, ws);
+
+    // Base detail
+    ctx.fillStyle = sd;
+    ctx.fillRect(x - 1, gTop, castleW + 2, 1);
+  }
+
+  _drawTower(ctx, tx, ty, tw, th, night, fl, fp, sd, sm, sl, mr, wd, wl, wg, ws) {
+    // Tower body
+    ctx.fillStyle = sd;
+    ctx.fillRect(tx, ty + 4, tw, th - 4);
+    ctx.fillStyle = sm;
+    ctx.fillRect(tx + 1, ty + 5, tw - 2, th - 6);
+
+    // Stone blocks
+    ctx.fillStyle = sl;
+    for (let row = 0; row < th - 6; row += 4) {
+      for (let col = 0; col < tw - 2; col += 4) {
+        const off = (row / 4) % 2 === 0 ? 0 : 2;
+        ctx.fillRect(tx + 1 + col + off, ty + 5 + row, 1, 1);
+      }
+    }
+
+    // Battlements
+    ctx.fillStyle = sd;
+    for (let i = 0; i < tw; i += 3) {
+      ctx.fillRect(tx + i, ty + 2, 2, 2);
+      ctx.fillRect(tx + i, ty, 2, 2);
+    }
+    ctx.fillStyle = sl;
+    for (let i = 0; i < tw; i += 3) {
+      ctx.fillRect(tx + i, ty, 1, 1);
+    }
+
+    // Window
+    const wx = tx + Math.round(tw / 2) - 1;
+    const wy = ty + Math.round(th / 2) - 2;
+    const ww = 3;
+    const wh = 4;
+    ctx.fillStyle = sd;
+    ctx.fillRect(wx - 1, wy - 1, ww + 2, wh + 2);
+    ctx.fillStyle = mr;
+    ctx.fillRect(wx, wy, ww, wh);
+
+    if (night) {
+      ctx.fillStyle = ws;
+      ctx.fillRect(wx, wy, ww, wh);
+      ctx.fillStyle = wl;
+      ctx.fillRect(wx, wy + 1, ww, wh - 2);
+      ctx.fillStyle = wg;
+      ctx.fillRect(wx + 1, wy + 1, ww - 2, 1);
+    } else {
+      ctx.fillStyle = wd;
+      ctx.fillRect(wx, wy, ww, wh);
+      ctx.fillStyle = sd;
+      ctx.fillRect(wx, wy + Math.floor(wh / 2), ww, 1);
+      if (ww > 2) ctx.fillRect(wx + Math.floor(ww / 2), wy, 1, wh);
+    }
+
+    // Flag
+    ctx.fillStyle = fp;
+    ctx.fillRect(tx + Math.round(tw / 2), ty - 4, 1, 4);
+    ctx.fillStyle = fl;
+    ctx.fillRect(tx + Math.round(tw / 2) + 1, ty - 4, 2, 1);
+    ctx.fillRect(tx + Math.round(tw / 2) + 1, ty - 3, 1, 1);
   }
 
   _renderRim(ctx, b) {
