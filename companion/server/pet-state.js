@@ -12,7 +12,7 @@ export class PetState {
     this._cleanliness = 100;
     this._health = 100;
     this._bond = 10;
-    this.interactionBonus = 0;
+    this._interactionBonus = 0;
     this.poops = [];
     this.isBloated = false;
     this.isBellyUp = false;
@@ -41,11 +41,14 @@ export class PetState {
   get bond() { return this._bond; }
   set bond(v) { this._bond = clamp(v); }
 
+  get interactionBonus() { return this._interactionBonus; }
+  set interactionBonus(v) { this._interactionBonus = clamp(v); }
+
   get happiness() {
     return clamp(
       this._hunger * HAPPY_WEIGHT_HUNGER +
       this._cleanliness * HAPPY_WEIGHT_CLEAN +
-      this.interactionBonus * HAPPY_WEIGHT_INTERACT +
+      this._interactionBonus * HAPPY_WEIGHT_INTERACT +
       this._health * HAPPY_WEIGHT_HEALTH
     );
   }
@@ -73,7 +76,7 @@ export class PetState {
       cleanliness: this._cleanliness,
       health: this._health,
       bond: this._bond,
-      interactionBonus: this.interactionBonus,
+      interactionBonus: this._interactionBonus,
       poops: this.poops,
       isBloated: this.isBloated,
       isBellyUp: this.isBellyUp,
@@ -99,7 +102,8 @@ export class PetState {
       else if (key === 'cleanliness') pet._cleanliness = clamp(data.cleanliness);
       else if (key === 'health') pet._health = clamp(data.health);
       else if (key === 'bond') pet._bond = clamp(data.bond);
-      else if (key in pet) pet[key] = data[key];
+      else if (key === 'interactionBonus') pet._interactionBonus = clamp(data.interactionBonus);
+      else if (Object.hasOwn(pet, key)) pet[key] = data[key];
     }
     return pet;
   }
