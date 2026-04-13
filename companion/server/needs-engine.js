@@ -8,6 +8,10 @@ import {
   HEALTH_DAMAGE_HUNGER_MAX, HEALTH_DAMAGE_CLEAN_MAX,
   INTERACTION_BONUS_DECAY_PER_HOUR, THRESHOLD_CRITICAL,
   THRESHOLD_BELLY_UP_RECOVERY,
+  FEED_AMOUNT, FEED_COOLDOWN_MS, FEED_OVERCOUNT,
+  FEED_OVERWINDOW_MS, FEED_BLOAT_HAPPINESS_PENALTY,
+  WATER_CHANGE_COOLDOWN_MS, PLAY_BONUS, PLAY_COOLDOWN_MS,
+  POOP_DELAY_MIN_MS, POOP_DELAY_MAX_MS,
 } from '../shared/constants.js';
 
 export class NeedsEngine {
@@ -99,5 +103,85 @@ export class NeedsEngine {
     const poop = { id, x, y, createdAt: Date.now() };
     this._pet.poops.push(poop);
     this._emit('poop_add', poop);
+  }
+
+  // --- Actions ---
+
+  feed() {
+    const pet = this._pet;
+    const now = Date.now();
+
+    // Cooldown check
+    if (now - pet.lastFeedTime < FEED_COOLDOWN_MS) {
+      return { ok: false, reason: 'cooldown' };
+    }
+
+    // Overfeeding check
+    if (now - pet.feedWindowStart > FEED_OVERWINDOW_MS) {
+      pet.feedCountInWindow = 0;
+      pet.feedWindowStart = now;
+    }
+    pet.feedCountInWindow++;
+
+    let bloated = false;
+    if (pet.feedCountInWindow >= FEED_OVERCOUNT) {
+      pet.isBloated = true;
+      pet.interactionBonus = Math.max(0, pet.interactionBonus - FEED_BLOAT_HAPPINESS_PENALTY);
+      bloated = true;
+      // Extra poop from bloat
+      this._schedulePoop();
+      this._emit('bloat', { active: true });
+    }
+
+    pet.hunger += FEED_AMOUNT;
+    pet.lastFeedTime = now;
+    pet.lastInteraction = now;
+
+    // Schedule normal poop
+    this._schedulePoop();
+
+    this._emit('feed', {});
+    return { ok: true, bloated };
+  }
+
+  _schedulePoop() {
+    const delay = POOP_DELAY_MIN_MS + Math.random() * (POOP_DELAY_MAX_MS - POOP_DELAY_MIN_MS);
+    this._pet.pendingPoopTimers.push({ scheduledAt: Date.now() + delay });
+  }
+
+  cleanPoop(poopId) {
+    const pet = this._pet;
+    const idx = pet.poops.findIndex(p => p.id === poopId);
+    if (idx === -1) return { ok: false, reason: 'not_found' };
+    pet.poops.splice(idx, 1);
+    pet.lastInteraction = Date.now();
+    this._emit('poop_remove', { id: poopId });
+    return { ok: true };
+  }
+
+  changeWater() {
+    const pet = this._pet;
+    const now = Date.now();
+    if (now - pet.lastWaterChangeTime < WATER_CHANGE_COOLDOWN_MS) {
+      return { ok: false, reason: 'cooldown' };
+    }
+    pet.cleanliness = 100;
+    pet.lastWaterChangeTime = now;
+    pet.lastInteraction = now;
+    this._emit('water_change', {});
+    return { ok: true };
+  }
+
+  play() {
+    const pet = this._pet;
+    const now = Date.now();
+    if (now - pet.lastPlayTime < PLAY_COOLDOWN_MS) {
+      return { ok: false, reason: 'cooldown' };
+    }
+    pet.interactionBonus = Math.min(100, pet.interactionBonus + PLAY_BONUS);
+    pet.lastPlayTime = now;
+    pet.lastInteraction = now;
+    this._emit('play', {});
+    return { ok: true };
   }
 }
