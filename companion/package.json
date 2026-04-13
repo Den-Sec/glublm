@@ -1,0 +1,16 @@
+{
+  "name": "glublm-companion",
+  "version": "0.1.0",
+  "description": "GlubLM virtual pet companion server",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node --test server/**/*.test.js"
+  },
+  "dependencies": {
+    "onnxruntime-node": "^1.19.0",
+    "ws": "^8.16.0"
+  },
+  "license": "AGPL-3.0-or-later"
+}
