@@ -29,7 +29,7 @@ export const MSG = {
 };
 
 export function pack(type, data = {}) {
-  return JSON.stringify({ type, ...data, ts: Date.now() });
+  return JSON.stringify({ ...data, type, ts: Date.now() });
 }
 
 export function unpack(raw) {
