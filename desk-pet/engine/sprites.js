@@ -451,10 +451,10 @@ export class SpriteEngine {
     ctx.fillStyle = '#1a1a1a';
     ctx.fillRect(eyeX, eyeY, pxSize * 2, pxSize * 2);
 
-    // Determine which corner gets the white highlight based on cursor direction
-    // dx/dy are normalized (-1 to 1). When facing left, dx direction is flipped
-    // in the sprite's local frame (because the sprite is mirrored).
-    const localDx = flipX ? -eyeLook.dx : eyeLook.dx;
+    // Determine which corner gets the white highlight based on cursor direction.
+    // The overlay is in screen-space (drawn after sprite flip), so dx is NOT
+    // negated when flipped - screen-right is always hX=1 regardless of facing.
+    const localDx = eyeLook.dx;
     const localDy = eyeLook.dy;
 
     // Pick corner: right half if localDx > 0, bottom half if localDy > 0
