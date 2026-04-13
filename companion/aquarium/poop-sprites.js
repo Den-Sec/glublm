@@ -1,6 +1,6 @@
 /**
- * Poop sprite renderer - small brown mounds on the gravel.
- * Handles WS poop messages: add, remove, clear.
+ * Poop sprite renderer - pixel art poop emoji on the gravel.
+ * Classic swirl shape, GBA-style.
  */
 export class PoopSprites {
   /** @param {import('/engine/bowl.js').Bowl} bowl */
@@ -36,22 +36,58 @@ export class PoopSprites {
     for (const p of this._poops.values()) {
       const px = Math.round(left + p.x * w);
       const py = Math.round(top + p.y * h);
-
-      // Rounded mound shape - natural poop look
-      // Bottom row (wide)
-      ctx.fillStyle = '#3a2418';
-      ctx.fillRect(px + 1, py + 4, 5, 2);
-      // Middle body
-      ctx.fillStyle = '#4a3220';
-      ctx.fillRect(px, py + 2, 7, 2);
-      // Top (narrower)
-      ctx.fillStyle = '#5a4030';
-      ctx.fillRect(px + 1, py + 1, 5, 1);
-      ctx.fillRect(px + 2, py, 3, 1);
-      // Highlight
-      ctx.fillStyle = '#6a5040';
-      ctx.fillRect(px + 2, py + 1, 1, 1);
-      ctx.fillRect(px + 4, py + 2, 1, 1);
+      this._drawPoop(ctx, px, py);
     }
   }
+
+  _drawPoop(ctx, x, y) {
+    const d = '#3a2010'; // dark outline/shadow
+    const m = '#6a4420'; // medium brown body
+    const l = '#8a6040'; // light highlight
+
+    // Tip (swirl top)
+    _r(ctx, m, x+3, y, 2, 1);
+    _r(ctx, l, x+3, y, 1, 1);
+
+    // Top coil
+    _r(ctx, m, x+2, y+1, 4, 1);
+    _r(ctx, l, x+2, y+1, 1, 1);
+
+    // Swirl gap row 1
+    _r(ctx, m, x+1, y+2, 2, 1);
+    _r(ctx, l, x+1, y+2, 1, 1);
+    _r(ctx, m, x+4, y+2, 2, 1);
+
+    // Middle coil
+    _r(ctx, m, x+1, y+3, 6, 1);
+    _r(ctx, l, x+1, y+3, 2, 1);
+
+    // Swirl gap row 2
+    _r(ctx, m, x, y+4, 2, 1);
+    _r(ctx, l, x, y+4, 1, 1);
+    _r(ctx, m, x+3, y+4, 4, 1);
+
+    // Wide body
+    _r(ctx, m, x, y+5, 8, 1);
+    _r(ctx, l, x, y+5, 2, 1);
+    _r(ctx, d, x+6, y+5, 2, 1);
+
+    // Lower body
+    _r(ctx, m, x, y+6, 8, 1);
+    _r(ctx, l, x+1, y+6, 1, 1);
+    _r(ctx, d, x+7, y+6, 1, 1);
+
+    // Base (rounded)
+    _r(ctx, m, x+1, y+7, 6, 1);
+    _r(ctx, d, x+1, y+7, 1, 1);
+    _r(ctx, d, x+6, y+7, 1, 1);
+
+    // Bottom
+    _r(ctx, d, x+2, y+8, 4, 1);
+  }
+}
+
+function _r(ctx, color, x, y, w, h) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
 }
