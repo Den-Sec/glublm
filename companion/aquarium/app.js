@@ -1,0 +1,167 @@
+// companion/aquarium/app.js
+// Imports from desk-pet engine (served via /engine/ route)
+import { CanvasManager } from '/engine/canvas.js';
+import { Bowl } from '/engine/bowl.js';
+import { BubbleSystem, SplashSystem } from '/engine/bubbles.js';
+import { DissolveSystem } from '/engine/dissolve.js';
+import { SpriteEngine } from '/engine/sprites.js';
+import { FishMovement } from '/engine/movement.js';
+import { FishStateMachine, STATES } from '/engine/state-machine.js';
+import { SpeechBubble } from '/engine/speech.js';
+
+let canvas, bowl, bubbles, splash, sprites, movement, fsm, speech, dissolve;
+let ws = null;
+let waterQuality = 1.0; // 0-1, affects water overlay
+
+function connectWs() {
+  const url = `ws://${location.host}`;
+  ws = new WebSocket(url);
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    handleMessage(msg);
+  };
+
+  ws.onclose = () => {
+    setTimeout(connectWs, 3000); // reconnect
+  };
+
+  ws.onerror = () => ws.close();
+}
+
+function handleMessage(msg) {
+  switch (msg.type) {
+    case 'full_state':
+      waterQuality = (msg.cleanliness || 100) / 100;
+      if (msg.isBellyUp) fsm.transition(STATES.SAD, { duration: Infinity, priority: 0 });
+      break;
+    case 'needs_update':
+      waterQuality = (msg.cleanliness || 100) / 100;
+      if (msg.isBellyUp && fsm.currentState !== STATES.SAD) {
+        fsm.transition(STATES.SAD, { duration: Infinity, priority: 0 });
+      } else if (!msg.isBellyUp && fsm.currentState === STATES.SAD) {
+        fsm.transition(STATES.HAPPY, { duration: 3, priority: 3 });
+      }
+      break;
+    case 'speech':
+      speech.show(msg.text, { type: msg.speaker === 'user' ? 'user' : 'fish' });
+      if (msg.speaker === 'fish') {
+        fsm.transition(STATES.TALKING, { duration: Math.max(3, msg.text.length * 0.1), priority: 2 });
+      }
+      break;
+    case 'animation':
+      fsm.transition(msg.state, { duration: msg.duration || 2, priority: 3 });
+      break;
+    case 'feed':
+      fsm.transition(STATES.EATING, { duration: 2, priority: 3 });
+      // Food flakes handled by food-animation.js (Task 17)
+      break;
+    case 'water_quality':
+      waterQuality = msg.level;
+      break;
+    case 'water_change':
+      waterQuality = 1.0;
+      break;
+    case 'play':
+      fsm.transition(STATES.EXCITED, { duration: 2, priority: 3 });
+      splash.burst(movement.x, movement.y, 12);
+      break;
+    case 'belly_up':
+      if (msg.active) fsm.transition(STATES.SAD, { duration: Infinity, priority: 0 });
+      else fsm.transition(STATES.HAPPY, { duration: 3, priority: 3 });
+      break;
+  }
+}
+
+function sendCmd(type, data = {}) {
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type, ...data }));
+}
+
+function getFishSize() {
+  return Math.max(14, Math.min(24, Math.round(canvas.width * 0.1)));
+}
+
+function render(dt) {
+  sprites.update(dt);
+  fsm.update(dt);
+  bubbles.update(dt);
+  splash.update(dt);
+  speech.update(dt);
+  dissolve.update(dt);
+  movement.update(dt);
+
+  // Render to pixel buffer
+  bowl.render(canvas.ctx, dt);
+  bubbles.render(canvas.ctx);
+
+  // Water quality overlay (dirty water tinting)
+  if (waterQuality < 0.8) {
+    const alpha = (1 - waterQuality) * 0.4; // max 0.4 opacity when fully dirty
+    canvas.ctx.save();
+    canvas.ctx.globalAlpha = alpha;
+    canvas.ctx.fillStyle = waterQuality < 0.3 ? '#2a3a10' : '#1a2a18';
+    canvas.ctx.fillRect(0, 0, canvas.width, canvas.height);
+    canvas.ctx.restore();
+  }
+
+  const fs = getFishSize();
+  sprites.render(canvas.ctx, movement.x, movement.y, fs, !movement.facingRight, movement.getEyeLook());
+  splash.render(canvas.ctx);
+
+  canvas.present();
+
+  const fishScreen = canvas.internalToScreen(movement.x, movement.y);
+  speech.render(canvas.screenCtx, fishScreen.x, fishScreen.y, canvas.screenWidth, canvas.screenHeight);
+
+  if (dissolve.hasParticles) dissolve.render(canvas.screenCtx);
+}
+
+function setupInput() {
+  canvas.el.addEventListener('pointerup', (e) => {
+    const pos = canvas.screenToInternal(e.clientX, e.clientY);
+    const fs = getFishSize();
+    const hitFish = Math.abs(pos.x - movement.x) < fs * 0.6 && Math.abs(pos.y - movement.y) < fs * 0.6;
+    if (hitFish) {
+      sendCmd('cmd_click_fish');
+      splash.burst(movement.x, movement.y, 8);
+    } else if (bowl.isInSwimBounds(pos.x, pos.y)) {
+      splash.burst(pos.x, pos.y, 4);
+    }
+  });
+
+  canvas.el.addEventListener('pointermove', (e) => {
+    const pos = canvas.screenToInternal(e.clientX, e.clientY);
+    movement.setCursor(pos.x, pos.y);
+  });
+
+  canvas.el.addEventListener('pointerleave', () => movement.setCursor(null, null));
+  canvas.el.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+function init() {
+  const canvasEl = document.getElementById('bowl');
+  canvas = new CanvasManager(canvasEl);
+  bowl = new Bowl(canvas);
+  bubbles = new BubbleSystem(bowl);
+  splash = new SplashSystem();
+  sprites = new SpriteEngine();
+  movement = new FishMovement(bowl);
+  fsm = new FishStateMachine(sprites, movement);
+  speech = new SpeechBubble();
+  dissolve = new DissolveSystem();
+
+  speech.onFadeOutStart((rect) => {
+    if (rect) dissolve.burst(rect.cx, rect.cy, rect.w, rect.h, 18);
+  });
+
+  setupInput();
+  canvas.startLoop(render);
+  connectWs();
+
+  setTimeout(() => {
+    speech.show('glub!', { type: 'fish', duration: 3 });
+    fsm.transition(STATES.HAPPY, { duration: 2, priority: 2 });
+  }, 600);
+}
+
+document.addEventListener('DOMContentLoaded', init);
