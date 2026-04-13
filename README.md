@@ -129,26 +129,82 @@ Total: **~2,250 lines of vanilla JS across 10 modules**. No React, no build tool
 
 ## The Companion
 
-> *The same goldfish, but now it needs you. It gets hungry. Its water gets dirty. It poops on the gravel. Leave it alone for a day and you'll come back to a belly-up fish floating at the surface. Feed it, clean its bowl, play with it, and it slowly starts to trust you.*
+> *The same goldfish, but now it needs you. It gets hungry. Its water gets dirty. It poops on the gravel. Leave it alone for a day and you'll come back to a belly-up fish floating at the surface. Feed it, clean its bowl, play with it, and over weeks it slowly starts to trust you - without ever remembering why.*
 
 The companion system evolves the desk pet from a standalone demo into a persistent virtual pet with biological needs and personality growth.
 
-### How it works
+### What it does
 
-A Node.js server manages the pet's state and runs AI inference. Two browser clients connect via WebSocket:
+- **The fish lives on a server.** It continues to exist (and get hungry) whether anyone is watching or not. State persists to disk and survives restarts.
+- **Biological needs.** Hunger drains over 24 hours. Water gets dirty. Poop accumulates on the gravel. Neglect long enough and the fish goes belly-up (floats upside down at the surface). It never dies permanently - but recovering from critical state takes sustained care.
+- **Real consequences.** Overfeed the fish 4 times in a row? It gets bloated. Ignore the poop? Water quality tanks. Let everything slide? Health spirals and the fish barely moves, barely speaks.
+- **Personality that grows.** Three layers: the goldfish always forgets (hardcoded). Its mood shifts minute-to-minute based on needs. Its bond with you grows over weeks of consistent care - from "hides behind the castle when you appear" to "wiggles excitedly and swims toward you."
+- **AI responds to state.** Chat responses are modulated by mood. A hungry fish and a content fish give different answers to the same question. A dying fish barely speaks. Idle phrases shift by category - cheerful when happy, existential when the water is dirty, critical when near death.
+- **Two-screen design.** Aquarium on your monitor (or a dedicated display), controller on your phone. Both connect via WebSocket. Multiple viewers can watch the same fish.
+- **Toy ball and food chase.** Press play and a bouncing ball appears - the fish chases it around the bowl. Feed it and flakes drift down from the surface while the fish swims up to eat them.
 
-- **Aquarium** (`localhost:3210/aquarium/`) - full-screen bowl rendering. Same pixel-art engine as the desk pet. Shows the fish, dirty water, poop, food flakes, algae. Display only.
-- **Controller** (`localhost:3210/controller/`) - mobile-first care interface. Status bars, action buttons that re-sort by urgency, chat input. Designed for your phone.
+### Architecture
+
+```
+                    +-------------------+
+                    |     Server        |
+                    |  Node.js :3210    |
+                    |                   |
+                    |  Pet state        |
+                    |  Needs engine     |
+                    |  ONNX inference   |
+                    |  Personality      |
+                    |  730 idle phrases |
+                    |  JSON persistence |
+                    +--------+----------+
+                             |
+                        WebSocket
+                    +--------+----------+
+                    |                   |
+              +-----+------+    +------+------+
+              |  Aquarium  |    | Controller  |
+              |  /aquarium |    | /controller |
+              |            |    |             |
+              | Canvas 2D  |    | Status bars |
+              | Pixel art  |    | Actions     |
+              | Fish, bowl |    | Chat input  |
+              | Poop, algae|    | GBA theme   |
+              | Food flakes|    | Mobile-first|
+              +------------+    +-------------+
+```
 
 ### Needs system
 
-| Stat | Behavior |
-|------|----------|
-| **Hunger** | Drains over ~24h. Feed to restore (+25%). 3 rapid feeds allowed, then 30 min cooldown. Overfeed = bloat. |
-| **Water quality** | Drains over ~83h, faster with poop (+0.3/hr each). Change water to reset. Clean poop individually. |
-| **Health** | Recovers at +4/hr when fed and clean. Drops when starving or filthy. Below 10% = belly-up (fish floats upside down). Always recoverable. |
-| **Happiness** | Derived from hunger + water + interactions + health. Play with the fish to boost it. |
-| **Bond** | Long-term stat (weeks to months). Grows from consistent care, shrinks from neglect. Affects fish behavior: stranger fish hides, bonded fish wiggles when you appear. |
+| Stat | What happens |
+|------|-------------|
+| **Hunger** | Drains to zero in ~24h. Feed to restore (+25% per feed, 3 rapid feeds then 30 min cooldown). Overfeed 4x in 4 hours = bloated fish, happiness penalty, extra poop. |
+| **Water quality** | Drains over ~83h base, but each poop on the gravel accelerates it (+0.3/hr per poop). Water change resets to 100% (2h cooldown). Water visually turns murky green, then brown. Algae spots appear on the bowl. |
+| **Health** | Derived from sustained care. Recovers at +4/hr when hunger > 40% AND water > 30%. Drops at -3/hr when either is critical, -6/hr when both are. Below 10% = belly-up. Always recoverable with feeding + cleaning. |
+| **Happiness** | Weighted formula: 35% hunger + 25% water + 25% interaction bonus + 15% health. Play with the fish (+20 bonus, 2 min cooldown) or chat with it to boost interactions. |
+| **Bond** | Persistent 0-100 stat that grows over weeks. +0.5 per feed (max +2/day), +0.3 per clean, +0.2 per chat, +1.0 daily bonus for consistent care. -0.5/day for neglect, -2.0 per belly-up event. Affects idle phrases, approach behavior, and how the fish reacts to your presence. |
+
+### Bond levels
+
+| Level | Range | Fish behavior |
+|-------|-------|--------------|
+| **Stranger** | 0-19 | Hides near the castle, short responses, skittish |
+| **Familiar** | 20-49 | Neutral, acknowledges you without enthusiasm |
+| **Comfortable** | 50-74 | Swims toward you, longer responses, playful |
+| **Bonded** | 75-100 | Wiggles excitedly when you appear, hints at unconscious routines |
+
+### How it's built
+
+| Layer | Tech |
+|-------|------|
+| **Server** | Node.js (no framework), single process, `ws` library for WebSocket |
+| **AI** | ONNX Runtime Node, same 36.1M model, server-side inference |
+| **Rendering** | Reuses `desk-pet/engine/` modules (Canvas 2D, pixel art) |
+| **Controller** | Vanilla JS + CSS, GBA-themed, mobile-first |
+| **Protocol** | WebSocket (real-time) + REST `/api/state` endpoint |
+| **Persistence** | Atomic JSON write (tmp + rename), auto-save every 60s |
+| **Tests** | 48 tests across 11 suites (`node:test`, zero dependencies) |
+
+Total: **~2,800 lines across 27 files**. No React, no build step, no bundler. Same philosophy as the desk pet.
 
 ### Quick start
 
@@ -158,6 +214,7 @@ npm install
 npm start
 # Aquarium:  http://localhost:3210/aquarium/
 # Controller: http://localhost:3210/controller/
+# API:        http://localhost:3210/api/state
 ```
 
 ## The Model
