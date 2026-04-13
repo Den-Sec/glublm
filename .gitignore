@@ -67,6 +67,8 @@ wandb/
 !desk-pet/tokenizer.json
 !desk-pet/data/
 !desk-pet/data/idle-phrases.json
+!companion/data/
+!companion/data/idle-phrases.json
 
 # HuggingFace cache
 .cache/
