@@ -49,6 +49,11 @@ function handleMessage(msg) {
       waterOverlay.setQuality((msg.cleanliness || 100) / 100);
       if (msg.isBellyUp) enterBellyUp();
       else if (isBellyUp) exitBellyUp();
+      // Load existing poops from state
+      if (msg.poops && msg.poops.length > 0) {
+        poopSprites.clear();
+        for (const p of msg.poops) poopSprites.add(p.id, p.x, p.y);
+      }
       // Bond behavior on connect (Task 19)
       if (msg.bondLevel) {
         bondLevel = msg.bondLevel;

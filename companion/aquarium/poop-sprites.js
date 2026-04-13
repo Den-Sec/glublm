@@ -51,13 +51,14 @@ export class PoopSprites {
       const px = Math.round(left + p.x * w);
       const py = Math.round(top + p.y * h);
 
-      // 3px brown circle: dark center with lighter rim
+      // 5px brown blob: dark body with highlight and shadow
       ctx.fillStyle = '#4a3220';
-      ctx.fillRect(px, py, 3, 3);
+      ctx.fillRect(px, py + 1, 5, 3);
+      ctx.fillRect(px + 1, py, 3, 5);
       ctx.fillStyle = '#5e4232';
-      ctx.fillRect(px, py, 1, 1);         // top-left highlight
+      ctx.fillRect(px + 1, py + 1, 2, 1); // top highlight
       ctx.fillStyle = '#3a2418';
-      ctx.fillRect(px + 2, py + 2, 1, 1); // bottom-right shadow
+      ctx.fillRect(px + 2, py + 3, 2, 1); // bottom shadow
     }
   }
 }

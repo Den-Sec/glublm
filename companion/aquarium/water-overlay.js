@@ -28,7 +28,7 @@ export class WaterOverlay {
   _generateAlgae() {
     this._algaeSpots = [];
     const b = this._bowl.getBounds();
-    const count = 6 + Math.floor(Math.random() * 5);
+    const count = 12 + Math.floor(Math.random() * 7);
     for (let i = 0; i < count; i++) {
       // Place spots near the bowl rim (high edge distance)
       const angle = Math.random() * Math.PI * 2;
@@ -49,15 +49,16 @@ export class WaterOverlay {
   render(ctx) {
     if (this._quality >= 0.8) return;
 
-    const alpha = (1 - this._quality) * 0.4;
+    // Stronger overlay: up to 0.7 alpha when fully dirty
+    const alpha = (1 - this._quality) * 0.7;
     ctx.save();
     ctx.globalAlpha = alpha;
 
     // Progressive tint: clear -> murky green -> brown-green
     if (this._quality < 0.2) {
-      ctx.fillStyle = '#3a3a10'; // brown-green (very dirty)
+      ctx.fillStyle = '#4a4a10'; // brown-green (very dirty)
     } else if (this._quality < 0.5) {
-      ctx.fillStyle = '#2a3a10'; // dark green
+      ctx.fillStyle = '#2a4a10'; // dark green
     } else {
       ctx.fillStyle = '#1a2a18'; // slight murk
     }
@@ -66,10 +67,10 @@ export class WaterOverlay {
 
     // Algae spots on bowl rim when <20%
     if (this._algaeSpots.length > 0) {
-      ctx.fillStyle = '#3a6828';
-      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = '#4a8030';
+      ctx.globalAlpha = 0.7;
       for (const s of this._algaeSpots) {
-        ctx.fillRect(Math.round(s.x), Math.round(s.y), s.size, s.size);
+        ctx.fillRect(Math.round(s.x), Math.round(s.y), s.size + 1, s.size + 1);
       }
       ctx.globalAlpha = 1;
     }
