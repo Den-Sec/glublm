@@ -22,12 +22,14 @@ describe('NeedsEngine.feed', () => {
     assert.equal(pet.hunger, 100);
   });
 
-  it('rejects feed during cooldown', () => {
+  it('allows 3 rapid feeds then rejects on cooldown', () => {
     const pet = new PetState();
-    pet.hunger = 50;
+    pet.hunger = 10;
     const engine = new NeedsEngine(pet);
-    engine.feed();
-    const result = engine.feed();
+    assert.ok(engine.feed().ok);  // 1st - ok
+    assert.ok(engine.feed().ok);  // 2nd - ok
+    assert.ok(engine.feed().ok);  // 3rd - ok
+    const result = engine.feed(); // 4th - cooldown
     assert.ok(!result.ok);
     assert.equal(result.reason, 'cooldown');
   });

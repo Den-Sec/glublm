@@ -118,16 +118,17 @@ export class NeedsEngine {
     const pet = this._pet;
     const now = Date.now();
 
-    // Cooldown check
-    if (now - pet.lastFeedTime < FEED_COOLDOWN_MS) {
-      return { ok: false, reason: 'cooldown' };
-    }
-
-    // Overfeeding check
+    // Reset feed window if expired
     if (now - pet.feedWindowStart > FEED_OVERWINDOW_MS) {
       pet.feedCountInWindow = 0;
       pet.feedWindowStart = now;
     }
+
+    // Cooldown only kicks in after 3 feeds (allow rapid feeding to rescue starving fish)
+    if (pet.feedCountInWindow >= FEED_OVERCOUNT && now - pet.lastFeedTime < FEED_COOLDOWN_MS) {
+      return { ok: false, reason: 'cooldown' };
+    }
+
     pet.feedCountInWindow++;
 
     let bloated = false;

@@ -1,6 +1,6 @@
 /**
  * Poop sprite renderer - pixel art poop emoji on the gravel.
- * Classic swirl shape, GBA-style.
+ * Dark body, no outline, sits directly on gravel tiles.
  */
 export class PoopSprites {
   /** @param {import('/engine/bowl.js').Bowl} bowl */
@@ -28,62 +28,45 @@ export class PoopSprites {
   render(ctx) {
     if (this._poops.size === 0) return;
     const b = this._bowl.getBounds();
-    const w = b.rx * 2;
-    const h = b.ry * 2;
-    const left = b.cx - b.rx;
-    const top = b.cy - b.ry;
 
+    // Base sits ON gravel tiles (gravel at ry*0.72 to ry*0.82)
+    const gravelMid = b.cy + Math.round(b.ry * 0.76);
+
+    // Visual cap: render max 100 poops to avoid performance issues
+    let count = 0;
     for (const p of this._poops.values()) {
-      const px = Math.round(left + p.x * w);
-      const py = Math.round(top + p.y * h);
+      if (++count > 100) break;
+      const dy = (gravelMid - b.cy) / b.ry;
+      const bowlHalfW = b.rx * Math.sqrt(Math.max(0, 1 - dy * dy));
+      const safeHalfW = bowlHalfW * 0.75;
+
+      const px = Math.round(b.cx - safeHalfW + p.x * safeHalfW * 2);
+      const yOff = Math.round(((p.y - 0.82) / 0.06) * 4);
+      const py = gravelMid + yOff;
+
       this._drawPoop(ctx, px, py);
     }
   }
 
   _drawPoop(ctx, x, y) {
-    const d = '#3a2010'; // dark outline/shadow
-    const m = '#6a4420'; // medium brown body
-    const l = '#8a6040'; // light highlight
+    const dk = '#100800';
+    const md = '#221008';
+    const lt = '#38180c';
 
-    // Tip (swirl top)
-    _r(ctx, m, x+3, y, 2, 1);
-    _r(ctx, l, x+3, y, 1, 1);
-
-    // Top coil
-    _r(ctx, m, x+2, y+1, 4, 1);
-    _r(ctx, l, x+2, y+1, 1, 1);
-
-    // Swirl gap row 1
-    _r(ctx, m, x+1, y+2, 2, 1);
-    _r(ctx, l, x+1, y+2, 1, 1);
-    _r(ctx, m, x+4, y+2, 2, 1);
-
-    // Middle coil
-    _r(ctx, m, x+1, y+3, 6, 1);
-    _r(ctx, l, x+1, y+3, 2, 1);
-
-    // Swirl gap row 2
-    _r(ctx, m, x, y+4, 2, 1);
-    _r(ctx, l, x, y+4, 1, 1);
-    _r(ctx, m, x+3, y+4, 4, 1);
-
-    // Wide body
-    _r(ctx, m, x, y+5, 8, 1);
-    _r(ctx, l, x, y+5, 2, 1);
-    _r(ctx, d, x+6, y+5, 2, 1);
-
-    // Lower body
-    _r(ctx, m, x, y+6, 8, 1);
-    _r(ctx, l, x+1, y+6, 1, 1);
-    _r(ctx, d, x+7, y+6, 1, 1);
-
-    // Base (rounded)
-    _r(ctx, m, x+1, y+7, 6, 1);
-    _r(ctx, d, x+1, y+7, 1, 1);
-    _r(ctx, d, x+6, y+7, 1, 1);
-
-    // Bottom
-    _r(ctx, d, x+2, y+8, 4, 1);
+    // Compact swirl, no outline (8x8)
+    _r(ctx, lt, x+3, y, 2, 1);
+    _r(ctx, md, x+2, y+1, 4, 1);
+    _r(ctx, md, x+1, y+2, 2, 1);
+    _r(ctx, dk, x+4, y+2, 2, 1);
+    _r(ctx, md, x+1, y+3, 6, 1);
+    _r(ctx, lt, x+1, y+3, 2, 1);
+    _r(ctx, dk, x, y+4, 2, 1);
+    _r(ctx, md, x+3, y+4, 4, 1);
+    _r(ctx, md, x, y+5, 7, 1);
+    _r(ctx, lt, x+1, y+5, 2, 1);
+    _r(ctx, dk, x, y+6, 7, 1);
+    _r(ctx, md, x+1, y+6, 4, 1);
+    _r(ctx, dk, x+1, y+7, 5, 1);
   }
 }
 
