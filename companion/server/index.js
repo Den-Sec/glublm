@@ -6,6 +6,10 @@ import { PetState } from './pet-state.js';
 import { NeedsEngine } from './needs-engine.js';
 import { Persistence } from './persistence.js';
 import { WsServer } from './ws-server.js';
+import { GlubInference } from './inference.js';
+import { buildPrompt } from './prompt-builder.js';
+import { PhraseSelector } from './phrase-selector.js';
+import { Personality } from './personality.js';
 import { MSG } from '../shared/protocol.js';
 import {
   TICK_INTERVAL_MS, SAVE_INTERVAL_MS, DEFAULT_PORT,
@@ -20,6 +24,31 @@ const pet = persistence.load() || new PetState();
 const engine = new NeedsEngine(pet);
 
 console.log(`[glub] Pet loaded: hunger=${pet.hunger.toFixed(1)} clean=${pet.cleanliness.toFixed(1)} health=${pet.health.toFixed(1)} bond=${pet.bond.toFixed(1)} age=${pet.ageDays}d`);
+
+// --- AI inference (loads async, server works before model is ready) ---
+const inference = new GlubInference();
+inference.load(
+  path.join(import.meta.dirname, '..', '..', 'desk-pet', 'model.onnx'),
+  path.join(import.meta.dirname, '..', '..', 'desk-pet', 'tokenizer.json')
+).catch(e => console.error('[glub] Model load failed:', e.message));
+
+// --- Personality & phrase selector ---
+const personality = new Personality(pet);
+
+const phrasesData = JSON.parse(fs.readFileSync(
+  path.join(import.meta.dirname, '..', 'data', 'idle-phrases.json'), 'utf-8'
+));
+const phraseSelector = new PhraseSelector(phrasesData.phrases);
+
+let lastPhrase = Date.now();
+const PHRASE_INTERVAL_MS = 45000;
+
+function getMoodLabel() {
+  if (pet.health < 10) return 'critical';
+  if (pet.hunger < 15) return 'hungry';
+  if (pet.cleanliness < 20) return 'uncomfortable';
+  return 'happy';
+}
 
 // --- HTTP server (serves static files for aquarium + controller) ---
 const MIME = {
@@ -83,7 +112,7 @@ engine.on('poop_add', (poop) => wss.broadcast(MSG.POOP, { action: 'add', ...poop
 engine.on('poop_remove', (data) => wss.broadcast(MSG.POOP, { action: 'remove', ...data }));
 engine.on('water_change', () => wss.broadcast(MSG.WATER_CHANGE));
 engine.on('play', () => wss.broadcast(MSG.PLAY, { toy: 'bubble_wand' }));
-engine.on('belly_up', () => wss.broadcast(MSG.BELLY_UP, { active: true }));
+engine.on('belly_up', () => { wss.broadcast(MSG.BELLY_UP, { active: true }); personality.onCritical(); });
 engine.on('recovery', () => wss.broadcast(MSG.BELLY_UP, { active: false }));
 engine.on('bloat', (d) => wss.broadcast(MSG.BLOAT, d));
 
@@ -97,13 +126,13 @@ wss.onMessage((msg, ws) => {
   switch (msg.type) {
     case MSG.CMD_FEED: {
       const result = engine.feed();
-      if (result.ok) broadcastNeeds();
+      if (result.ok) { personality.onFeed(); broadcastNeeds(); }
       else wss.send(ws, 'error', { action: 'feed', ...result });
       break;
     }
     case MSG.CMD_CLEAN_POOP: {
       const result = engine.cleanPoop(msg.id);
-      if (result.ok) broadcastNeeds();
+      if (result.ok) { personality.onClean(); broadcastNeeds(); }
       break;
     }
     case MSG.CMD_CHANGE_WATER: {
@@ -119,11 +148,15 @@ wss.onMessage((msg, ws) => {
       break;
     }
     case MSG.CMD_CHAT: {
-      // TODO: Task 10 - AI inference
       wss.broadcast(MSG.SPEECH, { text: msg.text, speaker: 'user', mood: '' });
-      setTimeout(() => {
-        wss.broadcast(MSG.SPEECH, { text: 'blub?', speaker: 'fish', mood: 'confused' });
-      }, 1500);
+      (async () => {
+        const prompt = buildPrompt(msg.text, pet.snapshot());
+        const response = await inference.generate(prompt);
+        wss.broadcast(MSG.SPEECH, { text: response, speaker: 'fish', mood: getMoodLabel() });
+        personality.onChat();
+        pet.lastInteraction = Date.now();
+        broadcastNeeds();
+      })();
       break;
     }
     case MSG.CMD_CLICK_FISH: {
@@ -162,12 +195,33 @@ setInterval(() => {
     broadcastNeeds();
     wss.broadcast(MSG.WATER_QUALITY, { level: pet.cleanliness / 100 });
   }
+
+  // Idle phrases
+  if (Date.now() - lastPhrase > PHRASE_INTERVAL_MS) {
+    lastPhrase = Date.now();
+    const phrase = phraseSelector.pick(pet.snapshot());
+    if (phrase) {
+      wss.broadcast(MSG.SPEECH, { text: phrase.text, speaker: 'fish', mood: getMoodLabel() });
+    }
+  }
 }, TICK_INTERVAL_MS);
 
 // --- Auto-save ---
 setInterval(() => {
   persistence.save(pet);
 }, SAVE_INTERVAL_MS);
+
+// --- Daily bond check ---
+let lastDailyCheck = Date.now();
+setInterval(() => {
+  const now = Date.now();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  if (now >= today.getTime() && lastDailyCheck < today.getTime()) {
+    personality.dailyCheck();
+    lastDailyCheck = now;
+    console.log('[glub] Daily bond check - bond:', pet.bond.toFixed(1));
+  }
+}, 60000);
 
 // --- Graceful shutdown ---
 function shutdown() {
