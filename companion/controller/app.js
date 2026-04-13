@@ -24,7 +24,23 @@ function handleMessage(msg) {
     case 'speech':
       if (msg.speaker === 'fish') renderQuote(msg.text, msg.mood);
       break;
+    case 'error':
+      showToast(`${msg.action}: ${msg.reason}`);
+      break;
   }
+}
+
+function showToast(text) {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    document.getElementById('app').prepend(toast);
+  }
+  toast.textContent = text;
+  toast.style.display = 'block';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.style.display = 'none'; }, 2000);
 }
 
 function renderStats() {
@@ -88,6 +104,8 @@ function renderActions() {
     btn.textContent = action.urgency >= 2 ? `${action.label}!` : action.label;
     btn.className = `action-btn ${action.urgency >= 2 ? 'urgent' : action.urgency >= 1 ? 'warn' : 'calm'}`;
     btn.addEventListener('click', () => {
+      btn.classList.add('pressed');
+      setTimeout(() => btn.classList.remove('pressed'), 300);
       if (action.id === 'feed') sendCmd('cmd_feed');
       else if (action.id === 'clean') sendCmd('cmd_change_water');
       else if (action.id === 'play') sendCmd('cmd_play');

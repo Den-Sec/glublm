@@ -126,28 +126,33 @@ wss.onMessage((msg, ws) => {
   switch (msg.type) {
     case MSG.CMD_FEED: {
       const result = engine.feed();
+      console.log('[glub] Feed:', result.ok ? 'ok' : result.reason);
       if (result.ok) { personality.onFeed(); broadcastNeeds(); }
       else wss.send(ws, 'error', { action: 'feed', ...result });
       break;
     }
     case MSG.CMD_CLEAN_POOP: {
       const result = engine.cleanPoop(msg.id);
+      console.log('[glub] Clean poop:', result.ok ? 'ok' : result.reason);
       if (result.ok) { personality.onClean(); broadcastNeeds(); }
       break;
     }
     case MSG.CMD_CHANGE_WATER: {
       const result = engine.changeWater();
+      console.log('[glub] Water:', result.ok ? 'ok' : result.reason);
       if (result.ok) broadcastNeeds();
       else wss.send(ws, 'error', { action: 'water', ...result });
       break;
     }
     case MSG.CMD_PLAY: {
       const result = engine.play();
+      console.log('[glub] Play:', result.ok ? 'ok' : result.reason);
       if (result.ok) broadcastNeeds();
       else wss.send(ws, 'error', { action: 'play', ...result });
       break;
     }
     case MSG.CMD_CHAT: {
+      console.log('[glub] Chat:', msg.text.substring(0, 30));
       wss.broadcast(MSG.SPEECH, { text: msg.text, speaker: 'user', mood: '' });
       (async () => {
         const prompt = buildPrompt(msg.text, pet.snapshot());
