@@ -35,13 +35,15 @@ A 35-million-parameter transformer that pretends to be a goldfish. Hard-capped a
 
 ## What is this?
 
-**GlubLM** is two things:
+**GlubLM** is three things:
 
 1. **A tiny language model** (36.1M params, 40 MB ONNX) trained from scratch to impersonate a goldfish. Not a fine-tune of GPT-2 or anything else. Written in PyTorch, trained on a single RTX 3060, shipped to [HuggingFace](https://huggingface.co/DenSec02/glublm-18m), [PyPI](#pip-install-glublm), and your browser.
 
 2. **A desk pet PWA** - a pixel-art goldfish that lives in a bowl in your browser, runs the full model client-side, swims around on its own, says things from a pool of 530 hand-curated idle phrases, and actually talks back when you poke it. Fully offline after first load. **[Adopt it here](https://den-sec.github.io/glublm/desk-pet/).**
 
-No backend. No API key. No telemetry. No inference server. Your conversation with the goldfish happens entirely in your tab, stays in your tab, and is forgotten by the goldfish before you close the tab.
+3. **A companion server** - a full virtual pet system where the goldfish has biological needs (hunger, water quality, health), personality growth (bond level over weeks), and a split-screen architecture: an aquarium display on your monitor and a care controller on your phone. The fish lives on a server, gets hungry whether you're watching or not, and poops on the gravel.
+
+The desk pet needs no backend. The companion needs a Node.js server (runs on any machine). Both use the same model and the same pixel-art engine.
 
 ## Why does this exist?
 
@@ -60,6 +62,7 @@ And then we put it in a pixel-art bowl on your desk so you can see it happen.
 | Option | What you get | How |
 |--------|--------------|-----|
 | **[Adopt the Desk Pet](https://den-sec.github.io/glublm/desk-pet/)** | Pixel-art goldfish, PWA installable, 530 idle phrases, chat with the fish, offline after first load | Open the URL. Click install if you want. |
+| **Companion Server** | Full virtual pet with needs, personality, aquarium display + phone controller | `cd companion && npm start` then open `localhost:3210` |
 | **[Simple browser chat](https://den-sec.github.io/glublm/)** | Minimal chat UI, same model | Open the URL. Type something. |
 | **[HuggingFace Space](https://huggingface.co/spaces/DenSec02/glublm)** | Gradio interface | Open the URL. |
 | **Python** | CLI + programmatic API | `pip install glublm && glublm chat` |
@@ -122,6 +125,39 @@ Total: **~2,250 lines of vanilla JS across 10 modules**. No React, no build tool
          v                                   v
     No backend                         Your browser tab
     No API calls                       (fully offline after 1st load)
+```
+
+## The Companion
+
+> *The same goldfish, but now it needs you. It gets hungry. Its water gets dirty. It poops on the gravel. Leave it alone for a day and you'll come back to a belly-up fish floating at the surface. Feed it, clean its bowl, play with it, and it slowly starts to trust you.*
+
+The companion system evolves the desk pet from a standalone demo into a persistent virtual pet with biological needs and personality growth.
+
+### How it works
+
+A Node.js server manages the pet's state and runs AI inference. Two browser clients connect via WebSocket:
+
+- **Aquarium** (`localhost:3210/aquarium/`) - full-screen bowl rendering. Same pixel-art engine as the desk pet. Shows the fish, dirty water, poop, food flakes, algae. Display only.
+- **Controller** (`localhost:3210/controller/`) - mobile-first care interface. Status bars, action buttons that re-sort by urgency, chat input. Designed for your phone.
+
+### Needs system
+
+| Stat | Behavior |
+|------|----------|
+| **Hunger** | Drains over ~24h. Feed to restore (+25%). 3 rapid feeds allowed, then 30 min cooldown. Overfeed = bloat. |
+| **Water quality** | Drains over ~83h, faster with poop (+0.3/hr each). Change water to reset. Clean poop individually. |
+| **Health** | Recovers at +4/hr when fed and clean. Drops when starving or filthy. Below 10% = belly-up (fish floats upside down). Always recoverable. |
+| **Happiness** | Derived from hunger + water + interactions + health. Play with the fish to boost it. |
+| **Bond** | Long-term stat (weeks to months). Grows from consistent care, shrinks from neglect. Affects fish behavior: stranger fish hides, bonded fish wiggles when you appear. |
+
+### Quick start
+
+```bash
+cd companion
+npm install
+npm start
+# Aquarium:  http://localhost:3210/aquarium/
+# Controller: http://localhost:3210/controller/
 ```
 
 ## The Model
@@ -255,7 +291,7 @@ glublm/
 ├── tools/                   # ONNX export, HF upload, benchmark
 ├── tests/                   # Pytest suite (77 tests green)
 ├── web/                     # Simple browser demo (legacy)
-├── desk-pet/                # Pixel-art PWA desk pet (this is the star)
+├── desk-pet/                # Pixel-art PWA desk pet (standalone, offline)
 │   ├── engine/              # 8 ES module engine (canvas, bowl, sprites, ...)
 │   ├── inference/           # ONNX model + BPE tokenizer in vanilla JS
 │   ├── data/idle-phrases.json   # 530 curated goldfish phrases
@@ -264,6 +300,12 @@ glublm/
 │   ├── sw.js                # Service worker (offline + streaming model cache)
 │   ├── model.onnx           # 40 MB quantized model (ships with the PWA)
 │   └── tokenizer.json       # BPE tokenizer
+├── companion/               # Virtual pet companion server (needs + personality)
+│   ├── server/              # Node.js: state, needs engine, AI, personality, WS
+│   ├── aquarium/            # Browser viewer (reuses desk-pet/engine/)
+│   ├── controller/          # GBA-themed mobile care UI
+│   ├── shared/              # Constants + WebSocket protocol
+│   └── data/idle-phrases.json   # 730 phrases (530 original + 200 mood-aware)
 ├── hf/                      # HuggingFace model card + dataset card
 ├── space/                   # HuggingFace Space (Gradio)
 ├── notebooks/               # Colab training notebook
@@ -288,9 +330,10 @@ glublm/
 | ONNX size (INT8) | 39.7 MB |
 | Inference latency (WASM) | ~1-3s per response (desktop), ~3-5s (mobile) |
 | Desk Pet LOC | ~2,250 (vanilla JS, 10 modules) |
-| Idle phrases | 530 across 13 categories |
+| Companion LOC | ~2,800 (Node.js server + browser clients, 27 files) |
+| Companion tests | 48 (node:test, 0 failures) |
+| Idle phrases | 730 across 18 categories (530 desk pet + 200 companion) |
 | Animation states | 12 (fish FSM) |
-| Time to build the desk pet (design + code + deploy) | ~7 hours |
 | Time the fish remembers you | ~10 seconds |
 
 ## Roadmap
@@ -302,12 +345,11 @@ glublm/
 - [x] PyPI package
 - [x] HuggingFace Space
 - [x] **Pixel-art desk pet PWA**
+- [x] **Companion server** (needs system, personality, aquarium viewer, controller UI)
 - [ ] Cloudflare Worker push relay (true background notifications)
+- [ ] Dedicated hardware build (Raspberry Pi + small display, same engine)
 - [ ] Hand-drawn sprite art (current ones are procedurally generated)
 - [ ] Mobile app wrappers (iOS / Android)
-- [ ] Raspberry Pi build (same engine, framebuffer backend)
-- [ ] ESP32 version (extreme constrained hardware, needs a different model)
-- [ ] Italian variant (`PesceRossoLM`)
 - [ ] Fine-tuned variants (grumpy goldfish, poet goldfish, philosopher goldfish)
 
 ## Contributing
@@ -359,7 +401,7 @@ If you use GlubLM in research, please cite:
 
 ### The goldfish would like to remind you that it doesn't remember reading this README.
 
-**[Adopt the Desk Pet](https://den-sec.github.io/glublm/desk-pet/)** - [HuggingFace](https://huggingface.co/DenSec02/glublm-18m) - [Dataset](https://huggingface.co/datasets/DenSec02/glublm-60k-ted) - [Space](https://huggingface.co/spaces/DenSec02/glublm) - [Architecture](docs/ARCHITECTURE.md) - [Comparisons](docs/COMPARISONS.md)
+**[Adopt the Desk Pet](https://den-sec.github.io/glublm/desk-pet/)** - [Companion Server](#the-companion) - [HuggingFace](https://huggingface.co/DenSec02/glublm-18m) - [Dataset](https://huggingface.co/datasets/DenSec02/glublm-60k-ted) - [Space](https://huggingface.co/spaces/DenSec02/glublm) - [Architecture](docs/ARCHITECTURE.md)
 
 *Made with water, warmth, and a dangerous amount of pixel art.*
 
