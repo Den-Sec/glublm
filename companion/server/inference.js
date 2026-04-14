@@ -2,13 +2,30 @@
 import { InferenceSession, Tensor } from 'onnxruntime-node';
 import fs from 'node:fs';
 
+// GPT-2 ByteLevel pre-tokenizer regex (use_regex=true in tokenizer.json).
+// See desk-pet/inference/tokenizer.js for full rationale.
+const GPT2_PRETOKEN_RE = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu;
+
 const MAX_CTX = 96;
 const MAX_NEW_TOKENS = 32;
 const MIN_NEW_TOKENS = 4;
 const TEMPERATURE = 0.6;
 const TOP_K = 40;
+const TOP_P = 0.9;
+const REPETITION_PENALTY = 1.15;
+const REPETITION_WINDOW = 24;
 
-function sampleTopK(logits, temperature, topK) {
+function applyRepetitionPenalty(logits, recentIds, penalty) {
+  if (penalty === 1.0) return logits;
+  const seen = new Set(recentIds);
+  for (const id of seen) {
+    if (logits[id] > 0) logits[id] /= penalty;
+    else logits[id] *= penalty;
+  }
+  return logits;
+}
+
+function sampleTopKTopP(logits, temperature, topK, topP) {
   const scaled = logits.map(x => x / temperature);
   const indexed = scaled.map((v, i) => [v, i]);
   indexed.sort((a, b) => b[0] - a[0]);
@@ -16,14 +33,28 @@ function sampleTopK(logits, temperature, topK) {
   const maxLogit = top[0][0];
   const exps = top.map(([v]) => Math.exp(v - maxLogit));
   const sumExp = exps.reduce((a, b) => a + b, 0);
-  const probs = exps.map(e => e / sumExp);
+  let probs = exps.map(e => e / sumExp);
+
+  // Nucleus (top-p) filter
+  if (topP > 0 && topP < 1) {
+    let cum = 0;
+    let cutoff = top.length;
+    for (let i = 0; i < probs.length; i++) {
+      cum += probs[i];
+      if (cum >= topP) { cutoff = i + 1; break; }
+    }
+    const kept = probs.slice(0, cutoff);
+    const keptSum = kept.reduce((a, b) => a + b, 0);
+    probs = kept.map(p => p / keptSum);
+  }
+
   const r = Math.random();
   let acc = 0;
   for (let i = 0; i < probs.length; i++) {
     acc += probs[i];
     if (r <= acc) return top[i][1];
   }
-  return top[top.length - 1][1];
+  return top[probs.length - 1][1];
 }
 
 export class GlubInference {
@@ -63,7 +94,10 @@ export class GlubInference {
           if (this._tokenizer.padId !== undefined) lastLogits[this._tokenizer.padId] = -Infinity;
         }
 
-        const nextId = sampleTopK(lastLogits, TEMPERATURE, TOP_K);
+        // Repetition penalty over last N produced tokens
+        applyRepetitionPenalty(lastLogits, produced.slice(-REPETITION_WINDOW), REPETITION_PENALTY);
+
+        const nextId = sampleTopKTopP(lastLogits, TEMPERATURE, TOP_K, TOP_P);
         ids.push(nextId);
         produced.push(nextId);
         if (step >= MIN_NEW_TOKENS && (nextId === this._tokenizer.eosId || nextId === this._tokenizer.padId)) break;
@@ -82,7 +116,7 @@ export class GlubInference {
 }
 
 // --- SimpleBPE (ported from desk-pet/inference/tokenizer.js) ---
-class SimpleBPE {
+export class SimpleBPE {
   constructor(json) {
     this._vocab = json.model.vocab;
     this._inv = Object.fromEntries(
@@ -158,14 +192,22 @@ class SimpleBPE {
     return parts;
   }
 
+  _preTokenize(text) {
+    return text.match(GPT2_PRETOKEN_RE) || [];
+  }
+
   encode(text, addSpecials = true) {
-    const encoded = this._byteEncode(' ' + text);
     const ids = [];
     if (addSpecials && this.bosId !== undefined) ids.push(this.bosId);
-    const tokens = this._bpeWord(encoded);
-    for (const t of tokens) {
-      const id = this._vocab[t];
-      ids.push(id !== undefined ? id : this.unkId);
+    if (text.length > 0) {
+      if (!/^\s/.test(text)) text = ' ' + text;
+      for (const piece of this._preTokenize(text)) {
+        const tokens = this._bpeWord(this._byteEncode(piece));
+        for (const t of tokens) {
+          const id = this._vocab[t];
+          ids.push(id !== undefined ? id : this.unkId);
+        }
+      }
     }
     if (addSpecials && this.eosId !== undefined) ids.push(this.eosId);
     return ids;

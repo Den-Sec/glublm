@@ -9,8 +9,21 @@ const MAX_NEW_TOKENS = 32;
 const MIN_NEW_TOKENS = 4;
 const TEMPERATURE = 0.6;
 const TOP_K = 40;
+const TOP_P = 0.9;
+const REPETITION_PENALTY = 1.15;
+const REPETITION_WINDOW = 24;
 
-function sampleTopK(logits, temperature, topK) {
+function applyRepetitionPenalty(logits, recentIds, penalty) {
+  if (penalty === 1.0) return logits;
+  const seen = new Set(recentIds);
+  for (const id of seen) {
+    if (logits[id] > 0) logits[id] /= penalty;
+    else logits[id] *= penalty;
+  }
+  return logits;
+}
+
+function sampleTopKTopP(logits, temperature, topK, topP) {
   const scaled = logits.map((x) => x / temperature);
   const indexed = scaled.map((v, i) => [v, i]);
   indexed.sort((a, b) => b[0] - a[0]);
@@ -18,14 +31,28 @@ function sampleTopK(logits, temperature, topK) {
   const maxLogit = top[0][0];
   const exps = top.map(([v]) => Math.exp(v - maxLogit));
   const sumExp = exps.reduce((a, b) => a + b, 0);
-  const probs = exps.map((e) => e / sumExp);
+  let probs = exps.map((e) => e / sumExp);
+
+  // Nucleus (top-p) filter: keep smallest set whose cumulative prob >= topP
+  if (topP > 0 && topP < 1) {
+    let cum = 0;
+    let cutoff = top.length;
+    for (let i = 0; i < probs.length; i++) {
+      cum += probs[i];
+      if (cum >= topP) { cutoff = i + 1; break; }
+    }
+    const kept = probs.slice(0, cutoff);
+    const keptSum = kept.reduce((a, b) => a + b, 0);
+    probs = kept.map((p) => p / keptSum);
+  }
+
   const r = Math.random();
   let acc = 0;
   for (let i = 0; i < probs.length; i++) {
     acc += probs[i];
     if (r <= acc) return top[i][1];
   }
-  return top[top.length - 1][1];
+  return top[probs.length - 1][1];
 }
 
 export class OnnxModel {
@@ -125,7 +152,10 @@ export class OnnxModel {
           if (this._tokenizer.padId !== undefined) lastLogits[this._tokenizer.padId] = -Infinity;
         }
 
-        const nextId = sampleTopK(lastLogits, TEMPERATURE, TOP_K);
+        // Repetition penalty over last N produced tokens (reduces "um... um... um..." loops)
+        applyRepetitionPenalty(lastLogits, produced.slice(-REPETITION_WINDOW), REPETITION_PENALTY);
+
+        const nextId = sampleTopKTopP(lastLogits, TEMPERATURE, TOP_K, TOP_P);
         ids.push(nextId);
         produced.push(nextId);
         if (step >= MIN_NEW_TOKENS && (nextId === this._tokenizer.eosId || nextId === this._tokenizer.padId)) break;

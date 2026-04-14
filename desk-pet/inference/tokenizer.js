@@ -2,6 +2,13 @@
  * Minimal BPE tokenizer - ported from web/glub.js.
  * Compatible with HuggingFace tokenizers JSON format.
  */
+
+// GPT-2 ByteLevel pre-tokenizer regex (use_regex=true in tokenizer.json).
+// Matches HF `tokenizers::pre_tokenizers::byte_level::ByteLevel` Rust impl.
+// Splits text into pieces BEFORE byte-encoding + BPE, so merges never
+// cross word/punct/whitespace boundaries the trainer never saw.
+const GPT2_PRETOKEN_RE = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu;
+
 export class SimpleBPE {
   constructor(json) {
     this.vocab = json.model.vocab;
@@ -78,14 +85,22 @@ export class SimpleBPE {
     return parts;
   }
 
+  _preTokenize(text) {
+    return text.match(GPT2_PRETOKEN_RE) || [];
+  }
+
   encode(text, addSpecials = true) {
-    const encoded = this._byteEncode(' ' + text);
     const ids = [];
     if (addSpecials && this.bosId !== undefined) ids.push(this.bosId);
-    const tokens = this._bpeWord(encoded);
-    for (const t of tokens) {
-      const id = this.vocab[t];
-      ids.push(id !== undefined ? id : this.unkId);
+    if (text.length > 0) {
+      if (!/^\s/.test(text)) text = ' ' + text;
+      for (const piece of this._preTokenize(text)) {
+        const tokens = this._bpeWord(this._byteEncode(piece));
+        for (const t of tokens) {
+          const id = this.vocab[t];
+          ids.push(id !== undefined ? id : this.unkId);
+        }
+      }
     }
     if (addSpecials && this.eosId !== undefined) ids.push(this.eosId);
     return ids;

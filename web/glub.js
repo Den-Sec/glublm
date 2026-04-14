@@ -35,6 +35,13 @@ function setStatus(text, ready = false) {
    Minimal BPE tokenizer (JSON format compatible with HF tokenizers library)
    Supports encoding/decoding for the byte-level BPE that GlubLM uses.
    ========================================================================= */
+
+// GPT-2 ByteLevel pre-tokenizer regex (use_regex=true in tokenizer.json).
+// See desk-pet/inference/tokenizer.js for full rationale - splitting BEFORE
+// BPE prevents merges across word/punct/whitespace boundaries the trainer
+// never saw, which was the root cause of garbled openings in browser output.
+const GPT2_PRETOKEN_RE = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu;
+
 class SimpleBPE {
   constructor(json) {
     this.vocab = json.model.vocab;
@@ -123,16 +130,24 @@ class SimpleBPE {
     return parts;
   }
 
+  _preTokenize(text) {
+    return text.match(GPT2_PRETOKEN_RE) || [];
+  }
+
   encode(text, addSpecials = true) {
-    // Byte-level pre-tokenize: prefix a space like HF ByteLevel(add_prefix_space=True)
-    const encoded = this._byteEncode(" " + text);
     const ids = [];
     if (addSpecials && this.bosId !== undefined) ids.push(this.bosId);
-    // Treat the full encoded string as one "word" for simplicity; BPE handles splitting
-    const tokens = this._bpeWord(encoded);
-    for (const t of tokens) {
-      const id = this.vocab[t];
-      ids.push(id !== undefined ? id : this.unkId);
+    if (text.length > 0) {
+      // HF ByteLevel(add_prefix_space=True): prepend " " only if not already starting with whitespace
+      if (!/^\s/.test(text)) text = " " + text;
+      // Pre-tokenize FIRST (GPT-2 regex), then byte-encode + BPE per piece
+      for (const piece of this._preTokenize(text)) {
+        const tokens = this._bpeWord(this._byteEncode(piece));
+        for (const t of tokens) {
+          const id = this.vocab[t];
+          ids.push(id !== undefined ? id : this.unkId);
+        }
+      }
     }
     if (addSpecials && this.eosId !== undefined) ids.push(this.eosId);
     return ids;
