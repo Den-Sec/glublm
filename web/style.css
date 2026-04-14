@@ -24,6 +24,30 @@ body {
   padding: 20px;
 }
 
+/* Adopt banner: gentle CTA toward the full PWA desk-pet experience.
+   Stays in the pastel/rounded language of this minimal landing demo. */
+.adopt-banner {
+  display: inline-block;
+  padding: 10px 18px;
+  margin-bottom: 24px;
+  background: var(--card);
+  color: var(--fg);
+  text-decoration: none;
+  border-radius: 999px;
+  border: 1.5px solid var(--accent);
+  box-shadow: var(--shadow);
+  font-size: 0.95rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.adopt-banner strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+.adopt-banner:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(255, 139, 61, 0.18);
+}
+
 header {
   text-align: center;
   margin-bottom: 30px;

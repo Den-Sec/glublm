@@ -372,7 +372,7 @@ glublm/
 ├── data_gen/                # Multi-agent dataset generation pipeline
 ├── tools/                   # ONNX export, HF upload, benchmark
 ├── tests/                   # Pytest suite (77 tests green)
-├── web/                     # Simple browser demo (legacy)
+├── web/                     # Minimal landing demo (root of gh-pages, redirects to /desk-pet/ for the full PWA)
 ├── desk-pet/                # Pixel-art PWA desk pet (standalone, offline)
 │   ├── engine/              # 8 ES module engine (canvas, bowl, sprites, ...)
 │   ├── inference/           # ONNX model + BPE tokenizer in vanilla JS
