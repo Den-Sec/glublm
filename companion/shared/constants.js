@@ -58,6 +58,9 @@ export const THRESHOLD_DEPRESSED = 25;
 export const THRESHOLD_CRITICAL = 10;
 export const THRESHOLD_BELLY_UP_RECOVERY = 15;
 
+// Absence (idle phrase trigger - distinct from BOND_ABSENCE_THRESHOLD_MS which gates bond decay)
+export const THRESHOLD_ABSENT_MS = 30 * 60 * 1000; // 30 min idle -> "absent" phrase condition
+
 // Tick interval
 export const TICK_INTERVAL_MS = 1000;
 export const SAVE_INTERVAL_MS = 60 * 1000; // auto-save every 60s

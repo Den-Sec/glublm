@@ -49,4 +49,57 @@ describe('PhraseSelector', () => {
       assert.notEqual(p.category, 'routine_hints');
     }
   });
+
+  it('favors notification when user is absent (familiar+)', () => {
+    // Need >=5 phrases per category: PhraseSelector caps `_recent` to half the eligible
+    // pool, so with only 2 phrases the recent-cap forces 50/50 alternation regardless of weights.
+    const phrases = [];
+    for (let i = 0; i < 8; i++) phrases.push({ text: `miss you ${i}`, category: 'notification' });
+    for (let i = 0; i < 8; i++) phrases.push({ text: `hi ${i}`, category: 'cheerful' });
+    const sel = new PhraseSelector(phrases);
+    const counts = { notification: 0, cheerful: 0 };
+    for (let i = 0; i < 400; i++) {
+      const p = sel.pick({
+        hunger: 90, cleanliness: 90, health: 100,
+        bondLevel: 'familiar', minsSinceInteraction: 45,
+      });
+      counts[p.category]++;
+    }
+    // notification weight 1.5 vs cheerful 0.2 in absent -> notification dominates.
+    // Empirical ratio ~2.6x (recent-cap flattens the pure 7.5x weight ratio).
+    assert.ok(counts.notification > counts.cheerful * 2,
+      `notification=${counts.notification} cheerful=${counts.cheerful}`);
+  });
+
+  it('does NOT trigger notification absent for stranger', () => {
+    const phrases = [];
+    for (let i = 0; i < 5; i++) phrases.push({ text: `miss you ${i}`, category: 'notification' });
+    for (let i = 0; i < 5; i++) phrases.push({ text: `hi ${i}`, category: 'cheerful' });
+    const sel = new PhraseSelector(phrases);
+    for (let i = 0; i < 100; i++) {
+      const p = sel.pick({
+        hunger: 90, cleanliness: 90, health: 100,
+        bondLevel: 'stranger', minsSinceInteraction: 60,
+      });
+      assert.notEqual(p.category, 'notification', 'stranger fish should not say miss you');
+    }
+  });
+
+  it('critical/hungry beat absent', () => {
+    const phrases = [];
+    for (let i = 0; i < 5; i++) phrases.push({ text: `miss you ${i}`, category: 'notification' });
+    for (let i = 0; i < 5; i++) phrases.push({ text: `so hungry ${i}`, category: 'hungry' });
+    const sel = new PhraseSelector(phrases);
+    let hungryCount = 0;
+    for (let i = 0; i < 100; i++) {
+      // Hungry AND absent -> hungry wins (priority)
+      const p = sel.pick({
+        hunger: 5, cleanliness: 90, health: 80,
+        bondLevel: 'familiar', minsSinceInteraction: 60,
+      });
+      if (p.category === 'hungry') hungryCount++;
+    }
+    // hungry weight 3 in 'hungry' condition vs notification 0 in 'hungry' -> hungry only
+    assert.equal(hungryCount, 100, 'hungry condition should dominate over absent');
+  });
 });

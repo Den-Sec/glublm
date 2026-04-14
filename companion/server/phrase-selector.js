@@ -1,23 +1,29 @@
 // companion/server/phrase-selector.js
-import { THRESHOLD_STARVING, THRESHOLD_FILTHY, THRESHOLD_CRITICAL } from '../shared/constants.js';
+import {
+  THRESHOLD_STARVING, THRESHOLD_FILTHY, THRESHOLD_CRITICAL,
+  THRESHOLD_ABSENT_MS,
+} from '../shared/constants.js';
 
-// Weight multipliers per state -> category
+// Weight multipliers per state -> category.
+// Conditions: base | hungry | dirty | critical | absent
+//   absent = user idle > THRESHOLD_ABSENT_MS (only if no other condition active)
+//   priority: critical > hungry > dirty > absent > base
 const WEIGHTS = {
-  cheerful: { base: 1, hungry: 0.1, dirty: 0.1, critical: 0 },
-  philosophical: { base: 1, hungry: 0.3, dirty: 0.5, critical: 0 },
-  meta: { base: 1, hungry: 0.5, dirty: 0.2, critical: 0 },
-  forgetful: { base: 1, hungry: 1, dirty: 1, critical: 0 },
-  existential: { base: 0.5, hungry: 0.8, dirty: 1.5, critical: 1 },
-  bored: { base: 0.8, hungry: 0.5, dirty: 0.5, critical: 0 },
-  hungry: { base: 0.1, hungry: 3, dirty: 0.5, critical: 0 },
-  uncomfortable: { base: 0.1, hungry: 0.5, dirty: 3, critical: 0 },
-  affectionate: { base: 0, hungry: 0, dirty: 0, critical: 0, bondMin: 'comfortable' },
-  cautious: { base: 0.3, hungry: 0.3, dirty: 0.3, critical: 0, bondMax: 'familiar' },
-  critical: { base: 0, hungry: 0, dirty: 0, critical: 3 },
-  routine_hints: { base: 0, hungry: 0, dirty: 0, critical: 0, bondMin: 'bonded' },
-  notification: { base: 0, hungry: 0, dirty: 0, critical: 0 },
+  cheerful: { base: 1, hungry: 0.1, dirty: 0.1, critical: 0, absent: 0.2 },
+  philosophical: { base: 1, hungry: 0.3, dirty: 0.5, critical: 0, absent: 0.3 },
+  meta: { base: 1, hungry: 0.5, dirty: 0.2, critical: 0, absent: 0.2 },
+  forgetful: { base: 1, hungry: 1, dirty: 1, critical: 0, absent: 0.5 },
+  existential: { base: 0.5, hungry: 0.8, dirty: 1.5, critical: 1, absent: 0.5 },
+  bored: { base: 0.8, hungry: 0.5, dirty: 0.5, critical: 0, absent: 0.8 },
+  hungry: { base: 0.1, hungry: 3, dirty: 0.5, critical: 0, absent: 0.1 },
+  uncomfortable: { base: 0.1, hungry: 0.5, dirty: 3, critical: 0, absent: 0.1 },
+  affectionate: { base: 0, hungry: 0, dirty: 0, critical: 0, absent: 0.3, bondMin: 'comfortable' },
+  cautious: { base: 0.3, hungry: 0.3, dirty: 0.3, critical: 0, absent: 0, bondMax: 'familiar' },
+  critical: { base: 0, hungry: 0, dirty: 0, critical: 3, absent: 0 },
+  routine_hints: { base: 0, hungry: 0, dirty: 0, critical: 0, absent: 0, bondMin: 'bonded' },
+  notification: { base: 0, hungry: 0, dirty: 0, critical: 0, absent: 1.5, bondMin: 'familiar' },
   // Default for unconfigured categories
-  _default: { base: 0.5, hungry: 0.5, dirty: 0.5, critical: 0 },
+  _default: { base: 0.5, hungry: 0.5, dirty: 0.5, critical: 0, absent: 0.2 },
 };
 
 const BOND_ORDER = ['stranger', 'familiar', 'comfortable', 'bonded'];
@@ -86,6 +92,8 @@ export class PhraseSelector {
     if (state.health < THRESHOLD_CRITICAL) return 'critical';
     if (state.hunger < THRESHOLD_STARVING) return 'hungry';
     if (state.cleanliness < THRESHOLD_FILTHY) return 'dirty';
+    if (state.minsSinceInteraction != null
+        && state.minsSinceInteraction * 60000 > THRESHOLD_ABSENT_MS) return 'absent';
     return 'base';
   }
 }

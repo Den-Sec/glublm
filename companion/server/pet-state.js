@@ -65,6 +65,10 @@ export class PetState {
     return 'bonded';
   }
 
+  get minsSinceInteraction() {
+    return Math.floor((Date.now() - this.lastInteraction) / 60000);
+  }
+
   _dayStart() {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -123,6 +127,7 @@ export class PetState {
       isBellyUp: this.isBellyUp,
       ageDays: this.ageDays,
       fishName: this.fishName,
+      minsSinceInteraction: this.minsSinceInteraction,
     };
   }
 }
