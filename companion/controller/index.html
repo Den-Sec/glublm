@@ -9,10 +9,11 @@
 <body>
   <div id="app">
     <header id="header">
-      <span id="fish-name">glub</span>
+      <h1 id="fish-name">glub</h1>
       <span id="status-indicator" aria-live="polite">connecting...</span>
     </header>
 
+    <main id="main">
     <div id="quote-box" role="status" aria-live="polite" aria-atomic="true">
       <p id="fish-quote">...</p>
     </div>
@@ -51,6 +52,7 @@
       <input id="prompt" type="text" placeholder="say something to the goldfish..." autocomplete="off" aria-label="message the goldfish" />
       <button id="send" type="button" aria-label="send message">&gt;</button>
     </div>
+    </main>
   </div>
 
   <script type="module" src="app.js"></script>

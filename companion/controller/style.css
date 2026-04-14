@@ -26,6 +26,10 @@ html, body {
   padding-bottom: 72px;
 }
 
+#main {
+  display: contents;
+}
+
 /* --- Header --- */
 
 #header {

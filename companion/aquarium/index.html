@@ -3,15 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <title>Glub Aquarium</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #0a1628; }
+    #main { display: contents; }
     #bowl { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: none; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
   </style>
 </head>
 <body>
-  <canvas id="bowl"></canvas>
+  <main id="main">
+    <h1 class="sr-only">Glub Aquarium</h1>
+    <canvas id="bowl" role="img" aria-label="A pixel-art goldfish living in a bowl. Watch it swim, eat, sleep, and react to its environment."></canvas>
+  </main>
   <script type="module" src="app.js"></script>
 </body>
 </html>
