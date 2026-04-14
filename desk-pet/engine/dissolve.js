@@ -8,6 +8,13 @@
  * looks like the words themselves are dispersing into the water as
  * the fish's memory clears.
  */
+// Cached check (re-evaluated on every burst, cheap):
+// honor the user's prefers-reduced-motion media query and skip particle bursts entirely.
+function reducedMotion() {
+  return typeof window !== 'undefined'
+    && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+}
+
 export class DissolveSystem {
   constructor() {
     this._particles = [];
@@ -22,6 +29,7 @@ export class DissolveSystem {
    * @param {number} [count=14]
    */
   burst(x, y, w, h, count = 14) {
+    if (reducedMotion()) return;  // skip decorative dissolve effect for users who asked for less motion
     for (let i = 0; i < count; i++) {
       // Start inside the bubble bounds
       const px = x + (Math.random() - 0.5) * w;

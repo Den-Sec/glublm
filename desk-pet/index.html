@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <title>GlubLM Desk Pet - adopt a goldfish in your browser</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="description" content="A 36M-parameter goldfish LLM that forgets you after 96 tokens. Runs entirely in your browser as an installable PWA - no backend, no accounts, no tracking. Adopt the fish." />
   <meta name="theme-color" content="#ff8b3d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -37,9 +37,14 @@
   <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.min.js"></script>
 </head>
 <body>
-  <canvas id="bowl"></canvas>
+  <a class="sr-only sr-skip-link" href="#prompt">skip to chat</a>
 
-  <div id="loading">
+  <canvas id="bowl" role="img" aria-label="A pixel-art goldfish swimming in a fishbowl. Watch it idle, swim, and speak."></canvas>
+
+  <!-- Screen reader mirror for the canvas-rendered speech bubble -->
+  <div id="sr-speech" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <div id="loading" role="status" aria-live="polite">
     <div class="loading-box">
       <p id="load-status">adopting goldfish...</p>
       <div class="progress-track">
@@ -50,15 +55,15 @@
   </div>
 
   <div id="chat-input" class="hidden">
-    <input id="prompt" type="text" placeholder="say something to the goldfish..." autocomplete="off" disabled />
-    <button id="send" type="button" disabled>&gt;</button>
+    <input id="prompt" type="text" placeholder="say something to the goldfish..." autocomplete="off" aria-label="message the goldfish" disabled />
+    <button id="send" type="button" aria-label="send message" disabled>&gt;</button>
   </div>
 
   <button id="settings-btn" class="hidden" type="button" aria-label="settings">&#9881;</button>
 
-  <div id="settings-panel" class="hidden">
+  <div id="settings-panel" class="hidden" role="dialog" aria-modal="true" aria-labelledby="settings-heading">
     <div class="settings-box">
-      <h3>settings</h3>
+      <h3 id="settings-heading">settings</h3>
       <label>
         <span>notifications</span>
         <select id="notif-freq">
@@ -73,19 +78,19 @@
         <input id="fish-name" type="text" placeholder="glub" maxlength="16" />
       </label>
       <div class="settings-footer">
-        <a href="https://github.com/Den-Sec/glublm" target="_blank">about</a>
+        <a href="https://github.com/Den-Sec/glublm" target="_blank" rel="noopener">about</a>
         <button id="settings-close" type="button">done</button>
       </div>
     </div>
   </div>
 
-  <div id="install-banner" class="hidden">
+  <div id="install-banner" class="hidden" role="status">
     <span>adopt this goldfish?</span>
     <button id="install-btn" type="button">install</button>
     <button id="install-dismiss" type="button">not now</button>
   </div>
 
-  <div id="ios-install-banner" class="hidden">
+  <div id="ios-install-banner" class="hidden" role="status">
     <span>to adopt: tap <strong>Share</strong> &#xFEFF;&#x2B06;&#xFE0E; then <strong>Add to Home Screen</strong></span>
     <button id="ios-install-dismiss" type="button">got it</button>
   </div>

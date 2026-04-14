@@ -12,6 +12,9 @@ import { SpriteEngine } from './engine/sprites.js';
 import { FishMovement } from './engine/movement.js';
 import { FishStateMachine, STATES } from './engine/state-machine.js';
 import { SpeechBubble } from './engine/speech.js';
+
+// Re-exported here to make duration-aware FSM transitions readable inline.
+const speechDuration = (text) => SpeechBubble.calcDuration(text);
 import { IdleScheduler } from './engine/idle.js';
 import { OnnxModel } from './inference/model.js';
 
@@ -62,7 +65,11 @@ const SETTINGS = {
   fishName: localStorage.getItem('glub_fish_name') || '',
   installDismissed: localStorage.getItem('glub_install_dismissed') === '1',
   installed: localStorage.getItem('glub_installed') === '1',
+  installShowCount: parseInt(localStorage.getItem('glub_install_show_count') || '0'),
 };
+
+// Set to true if model load fails - gates install banner + keeps loading overlay visible.
+let modelLoadFailed = false;
 
 // ============================================================
 // Random events
@@ -105,10 +112,12 @@ async function handleChat(text) {
   lastInteractionTime = performance.now();
   idle.onUserInteraction();
 
-  // Fish swims toward center and enters talking state
+  // Fish swims toward center and enters talking state.
+  // We don't yet know how long the response will be, so use the cap (28s)
+  // and refresh once the actual response arrives.
   const swim = bowl.getSwimBounds();
   movement.setTarget(swim.cx, swim.cy);
-  fsm.transition(STATES.TALKING, { duration: 15, priority: 3 });
+  fsm.transition(STATES.TALKING, { duration: 30, priority: 3 });
 
   // Wait for user bubble to show, then generate
   await new Promise(r => setTimeout(r, 1500));
@@ -116,12 +125,16 @@ async function handleChat(text) {
   let response;
   try {
     response = await model.generate(userText);
-  } catch {
+  } catch (err) {
+    console.error('Generate failed:', err);
     response = 'blub... i got confused';
   }
 
-  // Show fish response
-  speech.show(response || 'blub?', { type: 'fish' });
+  const replyText = response || 'blub?';
+
+  // Show fish response, and re-sync FSM TALKING window to the actual reply length
+  speech.show(replyText, { type: 'fish' });
+  fsm.transition(STATES.TALKING, { duration: speechDuration(replyText) + 1, priority: 3 });
 
   // Post-chat state transition
   const roll = Math.random();
@@ -215,7 +228,16 @@ function setupInput() {
   promptEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') form(e); });
 }
 
+function prefersReducedMotion() {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+}
+
 function startSpiral() {
+  // Decorative effect - skip entirely when user asked for reduced motion.
+  if (prefersReducedMotion()) {
+    splash.burst(movement.x, movement.y, 6);
+    return;
+  }
   spiralActive = true;
   spiralAngle = 0;
   spiralTimer = 0;
@@ -233,17 +255,27 @@ function setupSettings() {
 
   settingsBtn.addEventListener('click', () => {
     settingsPanel.classList.remove('hidden');
+    // Move keyboard focus into the dialog for screen reader / keyboard users.
+    setTimeout(() => settingsClose.focus(), 0);
   });
 
-  settingsClose.addEventListener('click', () => {
+  function closeSettings() {
     settingsPanel.classList.add('hidden');
     saveSettings();
-  });
+    settingsBtn.focus();  // return focus to the trigger
+  }
+
+  settingsClose.addEventListener('click', closeSettings);
 
   settingsPanel.addEventListener('click', (e) => {
-    if (e.target === settingsPanel) {
-      settingsPanel.classList.add('hidden');
-      saveSettings();
+    if (e.target === settingsPanel) closeSettings();
+  });
+
+  // ESC closes the settings dialog when open (standard dialog UX)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !settingsPanel.classList.contains('hidden')) {
+      e.preventDefault();
+      closeSettings();
     }
   });
 
@@ -309,6 +341,15 @@ function isIos() {
 
 function maybeShowInstallBanner() {
   if (SETTINGS.installed || SETTINGS.installDismissed) return;
+  // Don't pester users when model failed - they have a bigger problem
+  if (modelLoadFailed) return;
+  // Cap to 3 shows total; after that, the user clearly isn't interested
+  if (SETTINGS.installShowCount >= 3) return;
+
+  function bumpShowCount() {
+    SETTINGS.installShowCount++;
+    localStorage.setItem('glub_install_show_count', String(SETTINGS.installShowCount));
+  }
 
   // iOS: beforeinstallprompt doesn't exist, show manual instructions
   if (isIos()) {
@@ -319,6 +360,7 @@ function maybeShowInstallBanner() {
     });
     setTimeout(() => {
       iosInstallBanner.classList.remove('hidden');
+      bumpShowCount();
     }, 15000);
     return;
   }
@@ -326,7 +368,10 @@ function maybeShowInstallBanner() {
   // Chromium: use beforeinstallprompt API
   if (!deferredInstallPrompt) return;
   setTimeout(() => {
-    if (deferredInstallPrompt) installBanner.classList.remove('hidden');
+    if (deferredInstallPrompt) {
+      installBanner.classList.remove('hidden');
+      bumpShowCount();
+    }
   }, 15000);
 }
 
@@ -425,7 +470,7 @@ function render(dt) {
     if (phrase) {
       speech.show(phrase.text, { type: 'fish' });
       fsm.transition(STATES.TALKING, {
-        duration: Math.max(4, phrase.text.length * 0.1),
+        duration: speechDuration(phrase.text),
         priority: 2,
         onComplete: () => {
           if (Math.random() < 0.3) {
@@ -578,7 +623,8 @@ async function init() {
     chatInputEl.classList.remove('hidden');
     settingsBtn.classList.remove('hidden');
   } catch (e) {
-    updateProgress(0, 'glub (offline mode)');
+    modelLoadFailed = true;
+    updateProgress(0, 'glub (offline mode) - refresh to retry');
     settingsBtn.classList.remove('hidden');
     console.error('Model load failed:', e);
   }
@@ -589,11 +635,14 @@ async function init() {
   // Show install banner on third visit if not dismissed
   maybeShowInstallBanner();
 
-  // Hide loading overlay after a beat (but fish has been visible the whole time)
-  setTimeout(() => {
-    loadingEl.classList.add('fade-out');
-    setTimeout(() => { loadingEl.style.display = 'none'; }, 500);
-  }, 400);
+  // Hide loading overlay after a beat (but fish has been visible the whole time).
+  // On model load failure, keep the overlay visible so the user sees the error message.
+  if (!modelLoadFailed) {
+    setTimeout(() => {
+      loadingEl.classList.add('fade-out');
+      setTimeout(() => { loadingEl.style.display = 'none'; }, 500);
+    }, 400);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);

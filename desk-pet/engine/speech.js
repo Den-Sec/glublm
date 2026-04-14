@@ -28,13 +28,32 @@ export class SpeechBubble {
   show(text, { duration, type = 'fish' } = {}) {
     this._text = text;
     this._type = type;
-    // Comfortable reading: ~15 chars/sec with generous minimum
-    this._duration = duration || Math.max(5, Math.min(14, text.length * 0.12 + 3));
+    this._duration = duration || SpeechBubble.calcDuration(text);
     this._phase = 'fadeIn';
     this._opacity = 0;
     this._timer = 0;
     this._visible = true;
     this._fadeOutFired = false;
+
+    // Mirror to the screen-reader live region (canvas content is invisible to AT).
+    // Prefix with speaker so SR users know who said what.
+    if (typeof document !== 'undefined') {
+      const mirror = document.getElementById('sr-speech');
+      if (mirror) {
+        const speaker = type === 'fish' ? 'glub says' : 'you say';
+        mirror.textContent = `${speaker}: ${text}`;
+      }
+    }
+  }
+
+  /**
+   * Reading-time estimate for a given text, used to size both the bubble's
+   * own visible window and the FSM TALKING state so animation and bubble
+   * stay in sync. ~12 chars/sec with min 5s, cap 28s (long replies stay
+   * readable instead of being truncated mid-sentence).
+   */
+  static calcDuration(text) {
+    return Math.max(5, Math.min(28, (text?.length || 0) * 0.12 + 3));
   }
 
   dismiss() {

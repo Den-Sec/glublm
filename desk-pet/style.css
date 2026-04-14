@@ -1,5 +1,38 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Visually hidden, reachable to screen readers + keyboard.
+   Used for the canvas speech mirror (#sr-speech) and the skip link. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+/* Skip link becomes visible when focused via keyboard nav. */
+.sr-skip-link:focus {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  width: auto;
+  height: auto;
+  padding: 6px 12px;
+  margin: 0;
+  clip: auto;
+  background: #ff8b3d;
+  color: #0c1e30;
+  border: 2px solid #cc6a1a;
+  font-family: "Courier New", monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  z-index: 1000;
+  text-decoration: none;
+}
+
 html, body {
   width: 100%;
   height: 100%;
@@ -290,3 +323,22 @@ html, body {
   white-space: nowrap;
 }
 #ios-install-banner button:hover { background: #1c3a52; }
+
+/* Reduced motion: tone down or disable decorative motion (CSS transitions,
+   keyframes). Core fish swimming stays animated - only ambient/decorative
+   motion (spiral, dissolve particles, fade transitions) is suppressed.
+   JS-side suppression is handled in dissolve.js and app.js. */
+@media (prefers-reduced-motion: reduce) {
+  #loading,
+  .progress-fill,
+  #prompt {
+    transition: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
