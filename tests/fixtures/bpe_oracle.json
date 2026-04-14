@@ -1,0 +1,235 @@
+{
+  "tokenizer": "desk-pet/tokenizer.json",
+  "bos_id": 1,
+  "eos_id": 2,
+  "pad_id": 0,
+  "unk_id": 3,
+  "vocab_size": 5120,
+  "entries": [
+    {
+      "prompt": "",
+      "ids": [
+        1,
+        2
+      ],
+      "ids_no_specials": []
+    },
+    {
+      "prompt": "water",
+      "ids": [
+        1,
+        181,
+        2
+      ],
+      "ids_no_specials": [
+        181
+      ]
+    },
+    {
+      "prompt": " leading space",
+      "ids": [
+        1,
+        4132,
+        105,
+        1602,
+        2
+      ],
+      "ids_no_specials": [
+        4132,
+        105,
+        1602
+      ]
+    },
+    {
+      "prompt": "i love you",
+      "ids": [
+        1,
+        94,
+        426,
+        104,
+        2
+      ],
+      "ids_no_specials": [
+        94,
+        426,
+        104
+      ]
+    },
+    {
+      "prompt": "hello there",
+      "ids": [
+        1,
+        542,
+        222,
+        2
+      ],
+      "ids_no_specials": [
+        542,
+        222
+      ]
+    },
+    {
+      "prompt": "water -> ",
+      "ids": [
+        1,
+        181,
+        953,
+        3,
+        88,
+        2
+      ],
+      "ids_no_specials": [
+        181,
+        953,
+        3,
+        88
+      ]
+    },
+    {
+      "prompt": "why is the water thick",
+      "ids": [
+        1,
+        304,
+        138,
+        107,
+        181,
+        2556,
+        2
+      ],
+      "ids_no_specials": [
+        304,
+        138,
+        107,
+        181,
+        2556
+      ]
+    },
+    {
+      "prompt": "cafe",
+      "ids": [
+        1,
+        121,
+        58,
+        537,
+        2
+      ],
+      "ids_no_specials": [
+        121,
+        58,
+        537
+      ]
+    },
+    {
+      "prompt": "what's up",
+      "ids": [
+        1,
+        132,
+        124,
+        371,
+        2
+      ],
+      "ids_no_specials": [
+        132,
+        124,
+        371
+      ]
+    },
+    {
+      "prompt": "can't won't don't",
+      "ids": [
+        1,
+        236,
+        175,
+        887,
+        175,
+        233,
+        175,
+        2
+      ],
+      "ids_no_specials": [
+        236,
+        175,
+        887,
+        175,
+        233,
+        175
+      ]
+    },
+    {
+      "prompt": "x -> y -> z",
+      "ids": [
+        1,
+        88,
+        81,
+        953,
+        3,
+        103,
+        953,
+        3,
+        1460,
+        2
+      ],
+      "ids_no_specials": [
+        88,
+        81,
+        953,
+        3,
+        103,
+        953,
+        3,
+        1460
+      ]
+    },
+    {
+      "prompt": "a very long prompt with punctuation, numbers 123, and symbols!!",
+      "ids": [
+        1,
+        97,
+        447,
+        678,
+        1419,
+        791,
+        309,
+        1927,
+        399,
+        1797,
+        12,
+        2909,
+        3074,
+        17,
+        18,
+        12,
+        126,
+        1948,
+        240,
+        1810,
+        76,
+        312,
+        2
+      ],
+      "ids_no_specials": [
+        97,
+        447,
+        678,
+        1419,
+        791,
+        309,
+        1927,
+        399,
+        1797,
+        12,
+        2909,
+        3074,
+        17,
+        18,
+        12,
+        126,
+        1948,
+        240,
+        1810,
+        76,
+        312
+      ]
+    }
+  ]
+}
