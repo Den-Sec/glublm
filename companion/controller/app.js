@@ -72,6 +72,12 @@ function setBar(id, value) {
   fill.style.width = Math.max(2, value) + '%';
   val.textContent = Math.round(value) + '%';
 
+  // Mirror the value to the parent role=progressbar for screen readers
+  const bar = fill.parentElement;
+  if (bar?.getAttribute('role') === 'progressbar') {
+    bar.setAttribute('aria-valuenow', String(Math.round(value)));
+  }
+
   fill.classList.remove('green', 'orange', 'red');
   if (id === 'bond') return;
   if (value > 60) fill.classList.add('green');
@@ -86,37 +92,63 @@ function renderQuote(text, mood) {
   box.className = mood === 'critical' ? 'mood-critical' : (mood === 'hungry' || mood === 'uncomfortable') ? 'mood-warn' : '';
 }
 
-function renderActions() {
+// Action buttons: built once, mutated on each needs_update (preserves :active, .pressed, focus).
+const actionBtns = {};
+
+const ACTION_DEFS = [
+  { id: 'feed',  base: 'feed',         cmd: () => sendCmd('cmd_feed') },
+  { id: 'clean', base: 'clean water',  cmd: () => sendCmd('cmd_change_water') },
+  { id: 'play',  base: 'play',         cmd: () => sendCmd('cmd_play') },
+  // poop reads state.poops[0] fresh inside the handler (NOT captured at init time)
+  { id: 'poop',  base: 'clean poop',   cmd: () => {
+    const first = state.poops?.[0];
+    if (first) sendCmd('cmd_clean_poop', { id: first.id });
+  }},
+];
+
+function initActions() {
   const container = document.getElementById('actions');
-  const poopCount = state.poops?.length || 0;
-  const actions = [
-    { id: 'feed', label: 'feed', urgency: state.hunger < 30 ? (state.hunger < 15 ? 2 : 1) : 0 },
-    { id: 'clean', label: 'clean water', urgency: state.cleanliness < 30 ? (state.cleanliness < 20 ? 2 : 1) : 0 },
-    { id: 'play', label: 'play', urgency: 0 },
-    { id: 'poop', label: `clean poop${poopCount > 0 ? ` (${poopCount})` : ''}`, urgency: poopCount > 2 ? 1 : 0 },
-  ];
-
-  actions.sort((a, b) => b.urgency - a.urgency);
-
+  if (!container) return;
   container.innerHTML = '';
-  for (const action of actions) {
+  for (const def of ACTION_DEFS) {
     const btn = document.createElement('button');
-    btn.textContent = action.urgency >= 2 ? `${action.label}!` : action.label;
-    btn.className = `action-btn ${action.urgency >= 2 ? 'urgent' : action.urgency >= 1 ? 'warn' : 'calm'}`;
+    btn.type = 'button';
+    btn.dataset.action = def.id;
     btn.addEventListener('click', () => {
       btn.classList.add('pressed');
       setTimeout(() => btn.classList.remove('pressed'), 300);
-      if (action.id === 'feed') sendCmd('cmd_feed');
-      else if (action.id === 'clean') sendCmd('cmd_change_water');
-      else if (action.id === 'play') sendCmd('cmd_play');
-      else if (action.id === 'poop') {
-        const first = state.poops?.[0];
-        if (first) sendCmd('cmd_clean_poop', { id: first.id });
-      }
+      def.cmd();
     });
     container.appendChild(btn);
+    actionBtns[def.id] = { btn, def };
   }
 }
+
+function urgencyOf(id) {
+  if (id === 'feed')  return state.hunger      < 15 ? 2 : state.hunger      < 30 ? 1 : 0;
+  if (id === 'clean') return state.cleanliness < 20 ? 2 : state.cleanliness < 30 ? 1 : 0;
+  if (id === 'play')  return 0;
+  if (id === 'poop')  return (state.poops?.length || 0) > 2 ? 1 : 0;
+  return 0;
+}
+
+function updateActions() {
+  const poopCount = state.poops?.length || 0;
+  for (const id of Object.keys(actionBtns)) {
+    const { btn, def } = actionBtns[id];
+    const u = urgencyOf(id);
+    const baseLabel = id === 'poop' && poopCount > 0 ? `${def.base} (${poopCount})` : def.base;
+    const nextText = u >= 2 ? `${baseLabel}!` : baseLabel;
+    if (btn.textContent !== nextText) btn.textContent = nextText;
+    const nextClass = `action-btn ${u >= 2 ? 'urgent' : u >= 1 ? 'warn' : 'calm'}`;
+    if (btn.className !== nextClass) btn.className = nextClass;
+    // Re-order via flexbox `order` (avoids DOM reparent which would kill :active/.pressed)
+    btn.style.order = String(-u);
+  }
+}
+
+// Backwards-compatible alias for the old function name (handleMessage still calls renderActions)
+const renderActions = updateActions;
 
 function updateStatus(text) {
   document.getElementById('status-indicator').textContent = text;
@@ -136,6 +168,7 @@ function setupChat() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initActions();
   setupChat();
   connectWs();
 });

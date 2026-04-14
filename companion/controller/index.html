@@ -3,53 +3,53 @@
 <head>
   <meta charset="utf-8" />
   <title>Glub Controller</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="app">
     <header id="header">
       <span id="fish-name">glub</span>
-      <span id="status-indicator">connecting...</span>
+      <span id="status-indicator" aria-live="polite">connecting...</span>
     </header>
 
-    <div id="quote-box">
+    <div id="quote-box" role="status" aria-live="polite" aria-atomic="true">
       <p id="fish-quote">...</p>
     </div>
 
     <div id="stats">
       <div class="stat-row">
-        <span class="stat-label">hunger</span>
-        <div class="stat-bar"><div id="bar-hunger" class="stat-fill"></div></div>
+        <span class="stat-label" id="lbl-hunger">hunger</span>
+        <div class="stat-bar" role="progressbar" aria-labelledby="lbl-hunger" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="bar-hunger" class="stat-fill"></div></div>
         <span id="val-hunger" class="stat-val">-</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">water</span>
-        <div class="stat-bar"><div id="bar-water" class="stat-fill"></div></div>
+        <span class="stat-label" id="lbl-water">water</span>
+        <div class="stat-bar" role="progressbar" aria-labelledby="lbl-water" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="bar-water" class="stat-fill"></div></div>
         <span id="val-water" class="stat-val">-</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">happiness</span>
-        <div class="stat-bar"><div id="bar-happy" class="stat-fill"></div></div>
+        <span class="stat-label" id="lbl-happy">happiness</span>
+        <div class="stat-bar" role="progressbar" aria-labelledby="lbl-happy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="bar-happy" class="stat-fill"></div></div>
         <span id="val-happy" class="stat-val">-</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">health</span>
-        <div class="stat-bar"><div id="bar-health" class="stat-fill"></div></div>
+        <span class="stat-label" id="lbl-health">health</span>
+        <div class="stat-bar" role="progressbar" aria-labelledby="lbl-health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="bar-health" class="stat-fill"></div></div>
         <span id="val-health" class="stat-val">-</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">bond</span>
-        <div class="stat-bar"><div id="bar-bond" class="stat-fill bond"></div></div>
+        <span class="stat-label" id="lbl-bond">bond</span>
+        <div class="stat-bar" role="progressbar" aria-labelledby="lbl-bond" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="bar-bond" class="stat-fill bond"></div></div>
         <span id="val-bond" class="stat-val">-</span>
       </div>
     </div>
 
-    <div id="actions"></div>
+    <div id="actions" aria-label="pet actions"></div>
 
     <div id="chat-input">
-      <input id="prompt" type="text" placeholder="say something to the goldfish..." autocomplete="off" />
-      <button id="send" type="button">&gt;</button>
+      <input id="prompt" type="text" placeholder="say something to the goldfish..." autocomplete="off" aria-label="message the goldfish" />
+      <button id="send" type="button" aria-label="send message">&gt;</button>
     </div>
   </div>
 
