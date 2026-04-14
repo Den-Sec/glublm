@@ -22,6 +22,10 @@ const WEIGHTS = {
   critical: { base: 0, hungry: 0, dirty: 0, critical: 3, absent: 0 },
   routine_hints: { base: 0, hungry: 0, dirty: 0, critical: 0, absent: 0, bondMin: 'bonded' },
   notification: { base: 0, hungry: 0, dirty: 0, critical: 0, absent: 1.5, bondMin: 'familiar' },
+  // Intimate/affectionate absence notifications. Gated to comfortable+ so a
+  // fish who just met the user (familiar) does not say "i miss you" or
+  // "it loves you" before that level of rapport has been built.
+  notification_affectionate: { base: 0, hungry: 0, dirty: 0, critical: 0, absent: 1.5, bondMin: 'comfortable' },
   // Default for unconfigured categories
   _default: { base: 0.5, hungry: 0.5, dirty: 0.5, critical: 0, absent: 0.2 },
 };

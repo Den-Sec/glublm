@@ -85,6 +85,34 @@ describe('PhraseSelector', () => {
     }
   });
 
+  it('gates notification_affectionate to comfortable bond+', () => {
+    const phrases = [];
+    for (let i = 0; i < 8; i++) phrases.push({ text: `miss you ${i}`, category: 'notification_affectionate' });
+    for (let i = 0; i < 8; i++) phrases.push({ text: `hi ${i}`, category: 'cheerful' });
+    const sel = new PhraseSelector(phrases);
+    // At familiar bond + absent condition, affectionate must not appear
+    for (let i = 0; i < 100; i++) {
+      const p = sel.pick({
+        hunger: 90, cleanliness: 90, health: 100,
+        bondLevel: 'familiar', minsSinceInteraction: 60,
+      });
+      assert.notEqual(p.category, 'notification_affectionate',
+        'familiar fish should not use affectionate notifications');
+    }
+    // At comfortable bond, it can appear (and will dominate vs cheerful 0.2 absent)
+    const sel2 = new PhraseSelector(phrases);
+    let affectionateCount = 0;
+    for (let i = 0; i < 400; i++) {
+      const p = sel2.pick({
+        hunger: 90, cleanliness: 90, health: 100,
+        bondLevel: 'comfortable', minsSinceInteraction: 60,
+      });
+      if (p.category === 'notification_affectionate') affectionateCount++;
+    }
+    assert.ok(affectionateCount > 100,
+      `affectionate should be common at comfortable bond, got ${affectionateCount}/400`);
+  });
+
   it('critical/hungry beat absent', () => {
     const phrases = [];
     for (let i = 0; i < 5; i++) phrases.push({ text: `miss you ${i}`, category: 'notification' });
