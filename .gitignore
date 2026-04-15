@@ -73,6 +73,9 @@ wandb/
 # HuggingFace cache
 .cache/
 
+# Eval transient logs (the JSONL artifacts ARE committed)
+eval/_*.log
+
 # Launch materials (private, not tracked)
 LAUNCH_KIT.md
 _launch/

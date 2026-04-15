@@ -40,6 +40,9 @@ deploy = [
     "huggingface-hub>=0.25.0",
     "safetensors>=0.4.0",
 ]
+eval = [
+    "scikit-learn>=1.5.0",
+]
 
 [project.scripts]
 glublm = "glublm.cli:main"
