@@ -7,8 +7,8 @@
 
 // Bump on any release. The model cache is versioned separately so we
 // don't force a 40 MB re-download on every code update.
-const CACHE_VERSION = 'glub-v4';
-const CACHE_MODEL = 'glub-model-v1';
+const CACHE_VERSION = 'glub-v5';
+const CACHE_MODEL = 'glub-model-v2';
 
 const STATIC_ASSETS = [
   './',

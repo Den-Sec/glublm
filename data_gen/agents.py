@@ -68,6 +68,10 @@ def run_generator(
     samples = _parse_json(text)
     if not isinstance(samples, list):
         raise ValueError(f"expected list, got {type(samples).__name__}")
+    # Truncate if LLM over-generated (Haiku sometimes returns count+/-1).
+    # Downstream guardian requires exact verdict/sample pairing.
+    if len(samples) > count:
+        samples = samples[:count]
     # Ensure every sample has required fields
     for s in samples:
         s.setdefault("category", topic_name)
@@ -135,10 +139,14 @@ def run_persona_guardian(
         model=model,
         system=system_prompt,
         user=user,
-        max_tokens=1024,
+        max_tokens=2048,
         temperature=0.0,
     )
     verdicts = _parse_json(text)
     if not isinstance(verdicts, list) or len(verdicts) != len(samples):
-        raise ValueError("persona_guardian verdict count mismatch")
+        raise ValueError(
+            f"persona_guardian verdict count mismatch: got "
+            f"{len(verdicts) if isinstance(verdicts, list) else 'non-list'} "
+            f"for {len(samples)} samples"
+        )
     return verdicts
