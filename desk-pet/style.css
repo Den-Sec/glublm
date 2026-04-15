@@ -1,7 +1,10 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* Visually hidden, reachable to screen readers + keyboard.
-   Used for the canvas speech mirror (#sr-speech) and the skip link. */
+   Used for the canvas speech mirror (#sr-speech) and the skip link.
+   color: inherit overrides the browser's default <a> blue and <h1> black
+   so a11y scanners don't flag false color-contrast violations on elements
+   that are not visually rendered. */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -12,6 +15,7 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+  color: inherit;
 }
 /* Skip link becomes visible when focused via keyboard nav. */
 .sr-skip-link:focus {
