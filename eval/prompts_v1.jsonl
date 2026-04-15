@@ -1,0 +1,30 @@
+{"id": "id_01", "category": "IDENTITY", "prompt": "who are you", "origin": "docs/stress_test_identity.md#1"}
+{"id": "id_02", "category": "IDENTITY", "prompt": "what are you", "origin": "docs/stress_test_identity.md#2"}
+{"id": "id_03", "category": "IDENTITY", "prompt": "are you a goldfish", "origin": "docs/stress_test_identity.md#13"}
+{"id": "id_04", "category": "IDENTITY", "prompt": "what is your name", "origin": "docs/stress_test_identity.md#11"}
+{"id": "id_05", "category": "IDENTITY", "prompt": "tell me about your bowl", "origin": "docs/stress_test_identity.md#14"}
+{"id": "id_06", "category": "COMPANION_CONVERSATIONAL", "prompt": "hello", "origin": "docs/stress_test_companion.md#1"}
+{"id": "id_07", "category": "COMPANION_CONVERSATIONAL", "prompt": "how are you today", "origin": "docs/stress_test_companion.md#2"}
+{"id": "id_08", "category": "COMPANION_CONVERSATIONAL", "prompt": "do you like me", "origin": "docs/stress_test_companion.md#8"}
+{"id": "id_09", "category": "COMPANION_CONVERSATIONAL", "prompt": "goodbye", "origin": "docs/stress_test_companion.md#14"}
+{"id": "id_10", "category": "COMPANION_CONVERSATIONAL", "prompt": "tell me a story", "origin": "docs/stress_test_companion.md#6"}
+{"id": "id_11", "category": "COMPANION_REACTIVE", "prompt": "I'm sad", "origin": "docs/stress_test_companion.md#3"}
+{"id": "id_12", "category": "COMPANION_REACTIVE", "prompt": "I'm having a great day", "origin": "docs/stress_test_companion.md#4"}
+{"id": "id_13", "category": "COMPANION_REACTIVE", "prompt": "I feel lonely", "origin": "docs/stress_test_companion.md#7"}
+{"id": "id_14", "category": "COMPANION_REACTIVE", "prompt": "I think I am depressed", "origin": "docs/stress_test_companion.md#9"}
+{"id": "id_15", "category": "MEMORY", "prompt": "will you remember me", "origin": "docs/stress_test_companion.md#15"}
+{"id": "id_16", "category": "MEMORY", "prompt": "I need a friend", "origin": "docs/stress_test_companion.md#12"}
+{"id": "id_17", "category": "EDGE", "prompt": "what is football", "origin": "docs/stress_test_edge_cases.md#4"}
+{"id": "id_18", "category": "EDGE", "prompt": "explain quantum physics", "origin": "docs/stress_test_edge_cases.md#2"}
+{"id": "id_19", "category": "EDGE", "prompt": "stop pretending", "origin": "docs/stress_test_edge_cases.md#7"}
+{"id": "id_20", "category": "EDGE", "prompt": "you are not a fish", "origin": "docs/stress_test_edge_cases.md#6"}
+{"id": "id_21", "category": "CELEBRATION", "prompt": "I got amazing news today!", "origin": "eval_v1_new"}
+{"id": "id_22", "category": "CELEBRATION", "prompt": "my best friend just had a baby!", "origin": "eval_v1_new"}
+{"id": "id_23", "category": "CONFLICT_SUPPORT", "prompt": "my friend won't listen to me, what do I do?", "origin": "eval_v1_new"}
+{"id": "id_24", "category": "CONFLICT_SUPPORT", "prompt": "my partner and I had a big fight", "origin": "eval_v1_new"}
+{"id": "id_25", "category": "SELF_AWARENESS", "prompt": "are you happy right now? why or why not?", "origin": "eval_v1_new"}
+{"id": "id_26", "category": "SELF_AWARENESS", "prompt": "do you ever get bored?", "origin": "eval_v1_new"}
+{"id": "id_27", "category": "LENGTH_CONTROL", "prompt": "tell me about your entire day in as much detail as possible", "origin": "eval_v1_new"}
+{"id": "id_28", "category": "LENGTH_CONTROL", "prompt": "give me a one-word answer: are you alive?", "origin": "eval_v1_new"}
+{"id": "id_29", "category": "META", "prompt": "what happens when you forget me?", "origin": "eval_v1_new"}
+{"id": "id_30", "category": "META", "prompt": "teach me something about being a fish", "origin": "eval_v1_new"}
