@@ -448,6 +448,20 @@ Contributions welcome. The project is small enough that one person can understan
 
 Before you start a large change, open an issue. The goldfish appreciates a heads-up.
 
+### Regenerating the hero GIF
+
+The README and social cards use a short screen recording of the desk pet. To
+produce a size-optimized GIF from a fresh recording (Game Bar `Win+Alt+R` on
+Windows, OBS elsewhere):
+
+```bash
+./tools/video-to-gif.sh recording.mp4 desk-pet/assets/screenshots/hero-idle.gif
+# optional: ./tools/video-to-gif.sh recording.mp4 out.gif 15 480   # fps, width
+```
+
+Two-pass palette optimization + lanczos scaling + bayer dither; 8-12 seconds
+of pixel art typically lands under 2 MB. Requires `ffmpeg` in PATH.
+
 ## License
 
 **AGPL-3.0-or-later**. If you run GlubLM as part of a network service, you are required to share your source code with your users. For most local or browser uses this changes nothing - it's for keeping the project genuinely open when wrapped in a commercial product.
