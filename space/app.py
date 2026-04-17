@@ -11,7 +11,7 @@ from glublm.inference import generate
 from glublm.model import GlubLM
 from glublm.tokenizer import GlubTokenizer
 
-REPO_ID = "DenSec02/glublm-18m"
+REPO_ID = "DenSec02/glublm-36m"
 
 # Download weights and tokenizer from HF Hub
 weights_path = hf_hub_download(REPO_ID, "model.safetensors")
@@ -45,7 +45,7 @@ def chat(prompt: str, temperature: float, top_k: int, top_p: float, max_new_toke
 TAGLINE = "the language model that already forgot this sentence"
 
 with gr.Blocks(title="GlubLM") as demo:
-    gr.Markdown(f"# GlubLM\n> *{TAGLINE}*\n\nA 35M-parameter goldfish with a 10-second memory. [Try the Desk Pet](https://den-sec.github.io/glublm/desk-pet/).")
+    gr.Markdown(f"# GlubLM\n> *{TAGLINE}*\n\nA 36M-parameter goldfish with a 10-second memory. [Try the Desk Pet](https://den-sec.github.io/glublm/desk-pet/).")
     with gr.Row():
         with gr.Column():
             prompt = gr.Textbox(label="say something to the goldfish", value="hello")
@@ -60,7 +60,7 @@ with gr.Blocks(title="GlubLM") as demo:
 
     gr.Markdown(
         "Learn more: [GitHub](https://github.com/Den-Sec/glublm) - "
-        "[Model card](https://huggingface.co/DenSec02/glublm-18m) - "
+        "[Model card](https://huggingface.co/DenSec02/glublm-36m) - "
         "[Dataset](https://huggingface.co/datasets/DenSec02/glublm-60k-ted)"
     )
 

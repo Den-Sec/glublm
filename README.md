@@ -4,13 +4,13 @@
 
 ### *the language model that already forgot this sentence*
 
-A 35-million-parameter transformer that pretends to be a goldfish. Hard-capped at a 96-token context. It literally cannot remember what you just said - and that's the point.
+A 36-million-parameter transformer that pretends to be a goldfish. Hard-capped at a 96-token context. It literally cannot remember what you just said - and that's the point.
 
 <p>
   <a href="https://den-sec.github.io/glublm/desk-pet/">
     <img alt="Desk Pet live demo" src="https://img.shields.io/badge/%F0%9F%90%9F%20adopt%20the%20goldfish-live%20demo-ff8b3d?style=for-the-badge" />
   </a>
-  <a href="https://huggingface.co/DenSec02/glublm-18m">
+  <a href="https://huggingface.co/DenSec02/glublm-36m">
     <img alt="HuggingFace model" src="https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-model-ffd21e?style=for-the-badge" />
   </a>
 </p>
@@ -37,7 +37,7 @@ A 35-million-parameter transformer that pretends to be a goldfish. Hard-capped a
 
 **GlubLM** is three things:
 
-1. **A tiny language model** (36.1M params, 40 MB ONNX) trained from scratch to impersonate a goldfish. Not a fine-tune of GPT-2 or anything else. Written in PyTorch, trained on a single RTX 3060, shipped to [HuggingFace](https://huggingface.co/DenSec02/glublm-18m), [PyPI](#pip-install-glublm), and your browser.
+1. **A tiny language model** (36.1M params, 40 MB ONNX) trained from scratch to impersonate a goldfish. Not a fine-tune of GPT-2 or anything else. Written in PyTorch, trained on a single RTX 3060, shipped to [HuggingFace](https://huggingface.co/DenSec02/glublm-36m), [PyPI](#pip-install-glublm), and your browser.
 
 2. **A desk pet PWA** - a pixel-art goldfish that lives in a bowl in your browser, runs the full model client-side, swims around on its own, says things from a pool of 530 hand-curated idle phrases, and actually talks back when you poke it. Fully offline after first load. **[Adopt it here](https://den-sec.github.io/glublm/desk-pet/).**
 
@@ -332,7 +332,7 @@ glublm chat --prompt "tell me about kindness"
 
 # Or download manually
 python -c "from huggingface_hub import hf_hub_download; \
-  hf_hub_download('DenSec02/glublm-18m', 'model.safetensors', local_dir='./ckpt')"
+  hf_hub_download('DenSec02/glublm-36m', 'model.safetensors', local_dir='./ckpt')"
 ```
 
 ### Train from scratch
@@ -497,7 +497,7 @@ If you use GlubLM in research, please cite:
 
 ### The goldfish would like to remind you that it doesn't remember reading this README.
 
-**[Adopt the Desk Pet](https://den-sec.github.io/glublm/desk-pet/)** - [Companion Server](#the-companion) - [HuggingFace](https://huggingface.co/DenSec02/glublm-18m) - [Dataset](https://huggingface.co/datasets/DenSec02/glublm-60k-ted) - [Space](https://huggingface.co/spaces/DenSec02/glublm) - [Architecture](docs/ARCHITECTURE.md)
+**[Adopt the Desk Pet](https://den-sec.github.io/glublm/desk-pet/)** - [Companion Server](#the-companion) - [HuggingFace](https://huggingface.co/DenSec02/glublm-36m) - [Dataset](https://huggingface.co/datasets/DenSec02/glublm-60k-ted) - [Space](https://huggingface.co/spaces/DenSec02/glublm) - [Architecture](docs/ARCHITECTURE.md)
 
 *Made with water, warmth, and a dangerous amount of pixel art.*
 

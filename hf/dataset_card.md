@@ -17,7 +17,7 @@ pretty_name: GlubLM 60K Ted (goldfish-persona single-turn conversations)
 
 # GlubLM 60K Ted Dataset
 
-A 60,837-sample dataset of single-turn conversations in the persona of a goldfish with a 10-second memory. Used to train [GlubLM-18M](https://huggingface.co/DenSec02/glublm-18m).
+A 60,837-sample dataset of single-turn conversations in the persona of a goldfish with a 10-second memory. Used to train [GlubLM (36M)](https://huggingface.co/DenSec02/glublm-36m).
 
 ## Generation method
 

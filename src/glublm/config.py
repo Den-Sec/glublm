@@ -8,7 +8,7 @@ from dataclasses import dataclass
 class ModelConfig:
     """Transformer architecture configuration.
 
-    Defaults correspond to the ~35M parameter GlubLM target.
+    Defaults correspond to the ~36M parameter GlubLM target.
     """
 
     vocab_size: int = 5120

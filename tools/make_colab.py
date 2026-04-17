@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 
 # Download the dataset
-tok_path = hf_hub_download("DenSec02/glublm-18m", "tokenizer.json")
+tok_path = hf_hub_download("DenSec02/glublm-36m", "tokenizer.json")
 data_path = hf_hub_download("DenSec02/glublm-60k-ted", "glublm_60k.json", repo_type="dataset")
 print(f"tokenizer: {tok_path}")
 print(f"dataset: {data_path}")

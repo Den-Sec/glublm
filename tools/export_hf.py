@@ -17,7 +17,7 @@ def main() -> None:
     ap.add_argument("--tokenizer", required=True)
     ap.add_argument("--onnx", required=True)
     ap.add_argument("--model-card", default="hf/model_card.md")
-    ap.add_argument("--repo", default="DenSec02/glublm-18m")
+    ap.add_argument("--repo", default="DenSec02/glublm-36m")
     ap.add_argument("--private", action="store_true")
     args = ap.parse_args()
 

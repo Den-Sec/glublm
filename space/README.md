@@ -15,4 +15,4 @@ license: agpl-3.0
 
 > *the language model that already forgot this sentence*
 
-A 35-million-parameter transformer pretending to be a goldfish with a 10-second memory. Try the [Desk Pet](https://den-sec.github.io/glublm/desk-pet/). See [GitHub](https://github.com/Den-Sec/glublm) for details.
+A 36-million-parameter transformer pretending to be a goldfish with a 10-second memory. Try the [Desk Pet](https://den-sec.github.io/glublm/desk-pet/). See [GitHub](https://github.com/Den-Sec/glublm) for details.
