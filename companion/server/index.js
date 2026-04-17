@@ -168,6 +168,10 @@ wss.onMessage((msg, ws) => {
       break;
     }
     case MSG.CMD_CHAT: {
+      if (typeof msg.text !== 'string' || msg.text.length === 0 || msg.text.length > 500) {
+        wss.send(ws, 'error', { action: 'chat', reason: 'invalid_input' });
+        break;
+      }
       console.log('[glub] Chat:', msg.text.substring(0, 30));
       wss.broadcast(MSG.SPEECH, { text: msg.text, speaker: 'user', mood: '' });
       (async () => {
