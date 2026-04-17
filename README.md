@@ -440,7 +440,7 @@ Contributions welcome. The project is small enough that one person can understan
 
 **Good first issues**:
 - Add a new idle phrase category
-- Draw actual pixel art sprites to replace the procedural ones
+- Draw actual pixel art sprites to replace the procedural ones — see [`CONTRIBUTING-ART.md`](CONTRIBUTING-ART.md) for the spec and workflow
 - Port the engine to a second rendering backend (WebGL, WebGPU, framebuffer)
 - Add a new animation state
 - Test on iOS Safari and file PWA bugs
