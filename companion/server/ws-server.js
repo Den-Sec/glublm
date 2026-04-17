@@ -13,6 +13,8 @@ function isLocalOrigin(origin) {
   }
 }
 
+const HEARTBEAT_INTERVAL_MS = 30_000;
+
 export class WsServer {
   constructor(httpServer) {
     this._wss = new WebSocketServer({
@@ -23,6 +25,9 @@ export class WsServer {
     this._handler = null;
 
     this._wss.on('connection', (ws) => {
+      ws.isAlive = true;
+      ws.on('pong', () => { ws.isAlive = true; });
+
       this._clients.add(ws);
       ws.on('message', (raw) => {
         const msg = unpack(raw.toString());
@@ -34,6 +39,21 @@ export class WsServer {
       // Notify handler of new connection
       if (this._handler) this._handler({ type: '_connect' }, ws);
     });
+
+    // Heartbeat: terminate clients that didn't answer the previous ping.
+    this._heartbeat = setInterval(() => {
+      for (const ws of this._clients) {
+        if (ws.isAlive === false) {
+          try { ws.terminate(); } catch { /* already dead */ }
+          this._clients.delete(ws);
+          continue;
+        }
+        ws.isAlive = false;
+        try { ws.ping(); } catch { /* ignore; will be reaped next tick */ }
+      }
+    }, HEARTBEAT_INTERVAL_MS);
+
+    this._wss.on('close', () => clearInterval(this._heartbeat));
   }
 
   onMessage(fn) {
