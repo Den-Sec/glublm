@@ -84,15 +84,21 @@ function encodeGif(frameDir, outFile, fps = FPS) {
 }
 
 async function waitForFishReady(page) {
-  // Loading overlay gets `fade-out` class once ORT session + tokenizer are up.
+  // ONNX WASM init + 40MB model load from file:// can easily take 30-45s.
+  // Also dismiss onboarding overlay so the fish is fully visible.
   try {
-    await page.waitForSelector('#loading.fade-out', { timeout: 15000 });
+    await page.waitForSelector('#loading.fade-out', { timeout: 90000 });
     log('loading screen faded out');
   } catch {
-    warn('loading.fade-out not seen in 15s - continuing anyway');
+    warn('loading.fade-out not seen in 90s - continuing anyway');
   }
+  // Skip onboarding (mark as seen before it blocks the view).
+  await page.evaluate(() => {
+    try { localStorage.setItem('glub_onboarded_v1', 'true'); } catch {}
+    document.getElementById('onboarding-overlay')?.classList.add('hidden');
+  });
   // Let the state machine settle into idle swim for a beat.
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(1500);
 }
 
 async function captureFrames(page, frameDir, durationMs, fps = FPS) {
