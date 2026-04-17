@@ -57,20 +57,30 @@ const MIME = {
   '.svg': 'image/svg+xml', '.onnx': 'application/octet-stream',
 };
 
-const COMPANION_ROOT = path.join(import.meta.dirname, '..');
-const DESK_PET_ROOT = path.join(import.meta.dirname, '..', '..', 'desk-pet');
+const COMPANION_ROOT = path.resolve(path.join(import.meta.dirname, '..'));
+const DESK_PET_ROOT = path.resolve(path.join(import.meta.dirname, '..', '..', 'desk-pet'));
+
+const AQUARIUM_ROOT = path.join(COMPANION_ROOT, 'aquarium');
+const CONTROLLER_ROOT = path.join(COMPANION_ROOT, 'controller');
+const ENGINE_ROOT = path.join(DESK_PET_ROOT, 'engine');
+
+// Path traversal guard: returns absolute path under `root`, or null if escape attempt.
+function resolveSafe(root, subpath) {
+  const resolved = path.resolve(path.join(root, subpath));
+  if (resolved !== root && !resolved.startsWith(root + path.sep)) return null;
+  return resolved;
+}
 
 function serveStatic(req, res) {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   let filePath;
 
   if (url.pathname.startsWith('/aquarium/')) {
-    filePath = path.join(COMPANION_ROOT, url.pathname);
+    filePath = resolveSafe(AQUARIUM_ROOT, url.pathname.slice('/aquarium/'.length));
   } else if (url.pathname.startsWith('/controller/')) {
-    filePath = path.join(COMPANION_ROOT, url.pathname);
+    filePath = resolveSafe(CONTROLLER_ROOT, url.pathname.slice('/controller/'.length));
   } else if (url.pathname.startsWith('/engine/')) {
-    // Serve desk-pet engine modules
-    filePath = path.join(DESK_PET_ROOT, url.pathname);
+    filePath = resolveSafe(ENGINE_ROOT, url.pathname.slice('/engine/'.length));
   } else if (url.pathname === '/api/state') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(pet.snapshot()));
@@ -82,6 +92,12 @@ function serveStatic(req, res) {
   } else {
     res.writeHead(404);
     res.end('not found');
+    return;
+  }
+
+  if (filePath === null) {
+    res.writeHead(403);
+    res.end('forbidden');
     return;
   }
 
