@@ -46,6 +46,11 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  // Intentionally NOT calling self.clients.claim(): letting an open tab
+  // keep its previous SW (and the JS modules already loaded from that
+  // version) avoids the "new app.js + old engine/movement.js" inconsistency
+  // that stale-while-revalidate can't fully prevent. New SW takes over on
+  // next full page load.
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
@@ -53,7 +58,7 @@ self.addEventListener('activate', (event) => {
           .filter((k) => k !== CACHE_VERSION && k !== CACHE_MODEL)
           .map((k) => caches.delete(k))
       )
-    ).then(() => self.clients.claim())
+    )
   );
 });
 
