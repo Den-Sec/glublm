@@ -126,7 +126,8 @@ function renderIcon(canvas, withBg, mask) {
   const H = canvas.height;
 
   if (mask) {
-    // Maskable: safe zone is inner 80%
+    // Maskable: safe zone is inner 80% (circular crop ~40% radius from center).
+    // Fish must fit inside circle of radius ~0.4 * W from center.
     ctx.fillStyle = PAL.bg;
     ctx.fillRect(0, 0, W, H);
 
@@ -179,8 +180,10 @@ function renderIcon(canvas, withBg, mask) {
     ctx.stroke();
   }
 
-  // Draw fish centered (bigger for icon visibility)
-  const scale = Math.floor(W / 24);
+  // Draw fish centered (bigger for icon visibility).
+  // Maskable: shrink to 90% (scale factor 24 -> ~27) so fish fits within circular safe zone.
+  const divisor = mask ? 27 : 24;
+  const scale = Math.floor(W / divisor);
   drawFish(ctx, W / 2, H / 2, scale);
 }
 
