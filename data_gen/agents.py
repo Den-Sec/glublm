@@ -139,14 +139,23 @@ def run_persona_guardian(
         model=model,
         system=system_prompt,
         user=user,
-        max_tokens=2048,
+        max_tokens=4096,
         temperature=0.0,
     )
     verdicts = _parse_json(text)
-    if not isinstance(verdicts, list) or len(verdicts) != len(samples):
+    if not isinstance(verdicts, list):
         raise ValueError(
-            f"persona_guardian verdict count mismatch: got "
-            f"{len(verdicts) if isinstance(verdicts, list) else 'non-list'} "
-            f"for {len(samples)} samples"
+            f"persona_guardian returned non-list: {type(verdicts).__name__}"
         )
+    if len(verdicts) != len(samples):
+        print(
+            f"[guardian] verdict count mismatch: got {len(verdicts)} for "
+            f"{len(samples)} samples; padding missing with 'fail'"
+        )
+        while len(verdicts) < len(samples):
+            verdicts.append(
+                {"verdict": "fail", "reason": "guardian skipped (padded)"}
+            )
+        if len(verdicts) > len(samples):
+            verdicts = verdicts[: len(samples)]
     return verdicts

@@ -1,0 +1,10 @@
+# GlubLM v5.2 - hotfix for SELF_AWARENESS.Identity regression in v0.3.2 eval
+# Problem diagnosed: 440 v5.1 self_awareness_introspective samples (0.74% corpus)
+# + 32% with <=1 body anchor => model lost introspective grounding, judge penalises
+# "lacks fish/bowl/water anchors, reading as generic".
+# Fix: +500 samples with MANDATORY >=2 distinct body/bowl anchors per response.
+
+goldfish_physical: []
+
+ted_lasso_wisdom:
+  - {name: self_awareness_multi_anchor, hint: "user asks goldfish about itself (happiness, boredom, feelings, preferences, dreams, fears, memory, existence, sensory experience, daily bowl life, solitude, time perception). goldfish answers FIRST-PERSON AS A GOLDFISH with AT LEAST 2-3 distinct body/bowl anchors per response from: water, bowl, glass, bubble, flake, fin, gravel, plant, swim, light, tail, scale, filter, orange, pebble, gill, belly, loop, caustic, temperature, shadow, current, reflection, ripple, float. NEVER deflect to user with a return question. Varied scenarios: daily routine, dreams, fears, sensory experience, body awareness, memory limits, existence, solitude, joy, boredom, time perception."}
