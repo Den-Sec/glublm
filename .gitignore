@@ -58,6 +58,9 @@ data/
 checkpoints/
 runs/
 logs/
+
+# Lighthouse / audit reports (run artifacts)
+reports/
 wandb/
 
 # Exception: ship the quantized demo model
