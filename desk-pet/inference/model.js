@@ -99,6 +99,11 @@ export class OnnxModel {
         for (const chunk of chunks) { modelBuf.set(chunk, offset); offset += chunk.length; }
 
         onProgress?.('loading', 95);
+        // Force single-thread WASM: multi-thread requires SharedArrayBuffer
+        // which requires cross-origin-isolation (COOP/COEP) headers that
+        // GitHub Pages doesn't set. Single-thread avoids the deprecation
+        // warning and ~20% of the runtime diff for a 36M-param model.
+        ort.env.wasm.numThreads = 1;
         this._session = await ort.InferenceSession.create(modelBuf, {
           executionProviders: ['wasm'],
         });
@@ -106,6 +111,7 @@ export class OnnxModel {
         // Fallback: no streaming progress
         const modelBuf = await modelResp.arrayBuffer();
         onProgress?.('loading', 90);
+        ort.env.wasm.numThreads = 1;
         this._session = await ort.InferenceSession.create(new Uint8Array(modelBuf), {
           executionProviders: ['wasm'],
         });

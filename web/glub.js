@@ -242,6 +242,9 @@ async function main() {
     tokenizer = new SimpleBPE(tokJson);
 
     setStatus("starting ONNX runtime...");
+    // Force single-thread WASM: multi-thread needs SharedArrayBuffer which
+    // needs cross-origin isolation headers GitHub Pages doesn't serve.
+    ort.env.wasm.numThreads = 1;
     session = await ort.InferenceSession.create(new Uint8Array(modelBuf), {
       executionProviders: ["wasm"],
     });
