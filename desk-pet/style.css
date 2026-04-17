@@ -1,5 +1,21 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+:root {
+  --chat-input-height: 52px;
+}
+
+/* Unified focus ring - keyboard navigation visible, mouse clicks no ring */
+*:focus {
+  outline: none;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid #ff8b3d;
+  outline-offset: 2px;
+}
+
 /* Visually hidden, reachable to screen readers + keyboard.
    Used for the canvas speech mirror (#sr-speech) and the skip link.
    color: inherit overrides the browser's default <a> blue and <h1> black
@@ -58,6 +74,14 @@ html, body {
   touch-action: none;
 }
 
+#chat-input,
+#settings-panel,
+#install-banner,
+#ios-install-banner,
+#loading {
+  touch-action: auto;
+}
+
 /* Loading - transparent overlay so fish is visible swimming behind */
 #loading {
   position: fixed;
@@ -107,15 +131,15 @@ html, body {
 .progress-fill {
   height: 100%;
   width: 0%;
-  background: #ff8b3d;
-  transition: width 0.3s ease-out;
+  background: #4a9abe;
+  transition: width 0.3s steps(20, end);
   /* GBA-style gradient bands */
   background-image: linear-gradient(
     90deg,
-    #ff8b3d 0%,
-    #ff8b3d 50%,
-    #e06b1d 50%,
-    #e06b1d 100%
+    #4a9abe 0%,
+    #4a9abe 50%,
+    #2a6884 50%,
+    #2a6884 100%
   );
   background-size: 4px 100%;
 }
@@ -123,14 +147,14 @@ html, body {
 .loading-hint {
   margin: 10px 0 0 0;
   font-size: 0.7rem;
-  color: #5a9cbe;
+  color: #7fb4d4;
   font-style: italic;
 }
 
 /* Chat input */
 #chat-input {
   position: fixed;
-  bottom: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -148,13 +172,12 @@ html, body {
   background: #0c1e30;
   color: #c0e4f4;
   font-family: "Courier New", "Consolas", monospace;
-  font-size: 0.9rem;
-  outline: none;
+  font-size: 1rem;
   image-rendering: pixelated;
 }
-#prompt:focus { border-color: #ff8b3d; }
+#prompt:focus { border-color: #4a9abe; }
 #prompt:disabled { opacity: 0.4; cursor: not-allowed; }
-#prompt::placeholder { color: #2a6884; }
+#prompt::placeholder { color: #4a7a94; }
 
 #send {
   width: 36px;
@@ -167,18 +190,24 @@ html, body {
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
+  transition: transform 0.05s ease-out, box-shadow 0.05s ease-out, background 0.15s;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
 }
 #send:hover:not(:disabled) { background: #e06b1d; }
+#send:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
 #send:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Settings button */
 #settings-btn {
   position: fixed;
-  top: 16px;
+  top: max(16px, env(safe-area-inset-top));
   right: 16px;
   width: 36px;
   height: 36px;
-  background: rgba(12, 30, 48, 0.8);
+  background: #0c1e30;
   border: 2px solid #4a9abe;
   color: #c0e4f4;
   font-size: 1.2rem;
@@ -186,8 +215,12 @@ html, body {
   z-index: 20;
   padding: 0;
   font-family: inherit;
+  transition: background 0.15s, transform 0.3s ease-out;
 }
-#settings-btn:hover { background: #122a42; }
+#settings-btn:hover {
+  background: #122a42;
+  transform: rotate(30deg);
+}
 #settings-btn.hidden { display: none; }
 
 /* Settings panel */
@@ -215,8 +248,6 @@ html, body {
   margin: 0 0 16px 0;
   font-size: 1.1rem;
   color: #ff8b3d;
-  text-transform: lowercase;
-  letter-spacing: 1px;
 }
 .settings-box label {
   display: flex;
@@ -233,10 +264,9 @@ html, body {
   color: #c0e4f4;
   font-family: inherit;
   font-size: 0.9rem;
-  outline: none;
 }
 .settings-box select:focus,
-.settings-box input:focus { border-color: #ff8b3d; }
+.settings-box input:focus { border-color: #4a9abe; }
 .settings-footer {
   display: flex;
   justify-content: space-between;
@@ -259,13 +289,20 @@ html, body {
   font-family: inherit;
   font-size: 0.85rem;
   cursor: pointer;
+  transition: transform 0.05s ease-out, box-shadow 0.05s ease-out, background 0.15s;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
 }
 .settings-footer button:hover { background: #e06b1d; }
+.settings-footer button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
 
 /* Install banner */
 #install-banner {
   position: fixed;
-  top: 12px;
+  bottom: calc(var(--chat-input-height) + 32px + env(safe-area-inset-bottom));
+  top: auto;
   left: 50%;
   transform: translateX(-50%);
   background: #0c1e30;
@@ -279,6 +316,11 @@ html, body {
   font-size: 0.85rem;
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
   z-index: 15;
+  animation: install-slide-up 0.4s ease-out;
+}
+@keyframes install-slide-up {
+  from { transform: translate(-50%, 120%); opacity: 0; }
+  to { transform: translateX(-50%); opacity: 1; }
 }
 #install-banner.hidden { display: none; }
 #install-banner button {
@@ -295,12 +337,18 @@ html, body {
   background: #ff8b3d !important;
   border-color: #cc6a1a !important;
   color: white !important;
+  transition: transform 0.05s ease-out, box-shadow 0.05s ease-out, background 0.15s;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+#install-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
 }
 
 /* iOS install banner */
 #ios-install-banner {
   position: fixed;
-  bottom: 56px;
+  bottom: calc(var(--chat-input-height) + 16px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   background: #0c1e30;
@@ -332,6 +380,59 @@ html, body {
 }
 #ios-install-banner button:hover { background: #1c3a52; }
 
+/* First-run onboarding overlay */
+#onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 25;
+  pointer-events: none; /* fish interaction NOT blocked; only .onboarding-box captures */
+}
+#onboarding-overlay.hidden { display: none; }
+
+.onboarding-box {
+  background: #0c1e30;
+  border: 2px solid #ff8b3d;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
+  padding: 16px 20px;
+  font-family: "Courier New", "Consolas", monospace;
+  color: #c0e4f4;
+  pointer-events: auto;
+  animation: pulse-glow 2.5s ease-in-out infinite;
+  text-align: center;
+  min-width: 200px;
+}
+
+.onboarding-text {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  min-height: 1.2em;
+}
+
+#onboarding-skip {
+  background: transparent;
+  border: 1px solid #2a6884;
+  color: #7fb4d4;
+  font-family: inherit;
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  cursor: pointer;
+  text-transform: lowercase;
+}
+
+#onboarding-skip:hover {
+  background: #122a42;
+  color: #c0e4f4;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.88; }
+}
+
 /* Reduced motion: tone down or disable decorative motion (CSS transitions,
    keyframes). Core fish swimming stays animated - only ambient/decorative
    motion (spiral, dissolve particles, fade transitions) is suppressed.
@@ -349,4 +450,54 @@ html, body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+  #install-banner { animation: none !important; }
+  #settings-btn:hover { transform: none !important; }
+  #send:active,
+  .settings-footer button:active,
+  #install-btn:active {
+    transform: none !important;
+    box-shadow: inherit !important;
+  }
+  .progress-fill {
+    transition: none !important;
+  }
+  .onboarding-box { animation: none !important; }
+}
+
+/* Brand mark top-left */
+#brand {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  left: 16px;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.7rem;
+  color: #7fb4d4;
+  opacity: 0.6;
+  z-index: 5;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: 1px;
+  text-transform: lowercase;
+}
+
+/* Settings panel close button (top-right X) */
+.settings-box { position: relative; }
+#settings-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid #2a6884;
+  color: #c0e4f4;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+}
+#settings-close:hover {
+  background: #122a42;
+  border-color: #4a9abe;
 }

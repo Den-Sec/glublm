@@ -25,6 +25,7 @@ const STATIC_ASSETS = [
   './engine/speech.js',
   './engine/idle.js',
   './engine/dissolve.js',
+  './engine/onboarding.js',
   './inference/model.js',
   './inference/tokenizer.js',
   './data/idle-phrases.json',

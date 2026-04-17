@@ -17,6 +17,7 @@ import { SpeechBubble } from './engine/speech.js';
 const speechDuration = (text) => SpeechBubble.calcDuration(text);
 import { IdleScheduler } from './engine/idle.js';
 import { OnnxModel } from './inference/model.js';
+import { shouldShowOnboarding, runOnboarding } from './engine/onboarding.js';
 
 // ============================================================
 // Systems
@@ -266,6 +267,8 @@ function setupSettings() {
   }
 
   settingsClose.addEventListener('click', closeSettings);
+
+  document.getElementById('settings-close')?.addEventListener('click', closeSettings);
 
   settingsPanel.addEventListener('click', (e) => {
     if (e.target === settingsPanel) closeSettings();
@@ -541,7 +544,7 @@ async function init() {
   chatInputEl = document.getElementById('chat-input');
   settingsBtn = document.getElementById('settings-btn');
   settingsPanel = document.getElementById('settings-panel');
-  settingsClose = document.getElementById('settings-close');
+  settingsClose = document.getElementById('settings-done');
   notifFreqEl = document.getElementById('notif-freq');
   fishNameEl = document.getElementById('fish-name');
   installBanner = document.getElementById('install-banner');
@@ -622,6 +625,11 @@ async function init() {
     sendEl.disabled = false;
     chatInputEl.classList.remove('hidden');
     settingsBtn.classList.remove('hidden');
+
+    // First-run onboarding: show 3 hints to new users
+    if (shouldShowOnboarding()) {
+      runOnboarding().catch(err => console.warn('onboarding failed:', err));
+    }
   } catch (e) {
     modelLoadFailed = true;
     updateProgress(0, 'glub (offline mode) - refresh to retry');
