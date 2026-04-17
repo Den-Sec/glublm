@@ -12,7 +12,7 @@ GlubLM is a small open-source project with no backend. The attack surface is del
 
 If you find a security issue, please **do not open a public GitHub issue**. Instead:
 
-1. Email the project maintainer (find the email on [Dennis Sepede's GitHub profile](https://github.com/Den-Sec)) with the subject line `[GlubLM Security]`.
+1. Email **dennisepede@proton.me** with the subject line `[GlubLM Security]`.
 2. Include: description, reproduction steps, affected version, impact assessment.
 3. We'll respond within 72 hours.
 
