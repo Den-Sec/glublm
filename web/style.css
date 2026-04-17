@@ -1,22 +1,45 @@
 :root {
-  --bg: #f7fcff;
-  --bowl: #e5f4ff;
-  --fg: #1a2b3c;
+  --bg-primary: #0a1628;
+  --bg-secondary: #0c1e30;
+  --bg-tertiary: #122a42;
+  --border-primary: #4a9abe;
+  --border-secondary: #2a6884;
   --accent: #ff8b3d;
-  --accent-dark: #e06b1d;
-  --muted: #6a7b8c;
-  --card: #ffffff;
-  --radius: 16px;
-  --shadow: 0 4px 20px rgba(30, 60, 90, 0.08);
+  --accent-dark: #cc6a1a;
+  --accent-deeper: #e06b1d;
+  --text-primary: #c0e4f4;
+  --text-secondary: #7fb4d4;
+  --text-muted: #4a7a94;
+  --shadow-pixel: 4px 4px 0 rgba(0, 0, 0, 0.5);
+}
+
+@font-face {
+  font-family: "Press Start 2P";
+  src: url("assets/fonts/PressStart2P-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 
 * { box-sizing: border-box; }
 
+/* Unified focus ring - keyboard navigation visible, mouse clicks no ring */
+*:focus {
+  outline: none;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background: linear-gradient(180deg, var(--bg) 0%, var(--bowl) 100%);
-  color: var(--fg);
+  font-family: "Courier New", "Consolas", monospace;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -25,27 +48,31 @@ body {
 }
 
 /* Adopt banner: gentle CTA toward the full PWA desk-pet experience.
-   Stays in the pastel/rounded language of this minimal landing demo. */
+   Unified with desk-pet GBA dark identity (pixel borders, flat surfaces). */
 .adopt-banner {
   display: inline-block;
   padding: 10px 18px;
   margin-bottom: 24px;
-  background: var(--card);
-  color: var(--fg);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   text-decoration: none;
-  border-radius: 999px;
-  border: 1.5px solid var(--accent);
-  box-shadow: var(--shadow);
+  border-radius: 0;
+  border: 2px solid var(--accent);
+  box-shadow: var(--shadow-pixel);
   font-size: 0.95rem;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .adopt-banner strong {
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 700;
 }
 .adopt-banner:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(255, 139, 61, 0.18);
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
+}
+.adopt-banner:active {
+  transform: translate(0, 0);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
 }
 
 header {
@@ -58,18 +85,20 @@ header {
   height: 80px;
   display: block;
   margin: 0 auto 8px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 h1 {
   margin: 0;
-  font-size: 2.2rem;
-  letter-spacing: -0.02em;
+  font-family: "Press Start 2P", "Courier New", monospace;
+  font-size: 1.6rem;
   color: var(--accent);
 }
 
 .tagline {
-  margin: 4px 0 0;
-  color: var(--muted);
+  margin: 8px 0 0;
+  color: var(--text-secondary);
   font-style: italic;
   font-size: 0.95rem;
 }
@@ -77,23 +106,24 @@ h1 {
 main {
   width: 100%;
   max-width: 640px;
-  background: var(--card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-primary);
+  border-radius: 0;
+  box-shadow: var(--shadow-pixel);
   padding: 24px;
 }
 
 #status {
   text-align: center;
-  color: var(--muted);
+  color: var(--text-secondary);
   padding: 10px;
   margin-bottom: 16px;
   font-size: 0.9rem;
 }
 
 #status.ready {
-  color: var(--accent-dark);
-  font-weight: 600;
+  color: var(--accent);
+  font-weight: 700;
 }
 
 #output {
@@ -101,8 +131,10 @@ main {
   max-height: 400px;
   overflow-y: auto;
   padding: 12px;
-  background: #f0f8ff;
-  border-radius: 12px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-primary);
+  color: var(--text-primary);
+  border-radius: 0;
   margin-bottom: 16px;
   font-size: 0.95rem;
   line-height: 1.5;
@@ -114,11 +146,11 @@ main {
 
 .msg.user {
   text-align: right;
-  color: var(--fg);
+  color: var(--text-primary);
 }
 
 .msg.glub {
-  color: var(--accent-dark);
+  color: var(--accent);
 }
 
 form {
@@ -129,11 +161,17 @@ form {
 #prompt {
   flex: 1;
   padding: 12px 16px;
-  border: 2px solid #d4e6f4;
-  border-radius: 999px;
+  border: 2px solid var(--border-primary);
+  border-radius: 0;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-family: "Courier New", "Consolas", monospace;
   font-size: 1rem;
-  outline: none;
   transition: border-color 0.2s;
+}
+
+#prompt::placeholder {
+  color: var(--border-secondary);
 }
 
 #prompt:focus {
@@ -141,7 +179,8 @@ form {
 }
 
 #prompt:disabled {
-  background: #f0f0f0;
+  background: var(--bg-tertiary);
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -149,52 +188,78 @@ form {
   padding: 12px 24px;
   background: var(--accent);
   color: white;
-  border: none;
-  border-radius: 999px;
+  border: 2px solid var(--accent-dark);
+  border-radius: 0;
+  font-family: "Courier New", "Consolas", monospace;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: transform 0.05s ease-out, box-shadow 0.05s ease-out, background 0.15s;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
 }
 
 #send:hover:not(:disabled) {
-  background: var(--accent-dark);
+  background: var(--accent-deeper);
+}
+
+#send:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
 }
 
 #send:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .about {
   margin-top: 24px;
   padding: 12px;
-  background: #f8fafc;
-  border-radius: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 0;
   font-size: 0.9rem;
   line-height: 1.6;
-  color: var(--muted);
+  color: var(--text-secondary);
 }
 
 .about summary {
   cursor: pointer;
-  font-weight: 600;
-  color: var(--fg);
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .about a {
-  color: var(--accent-dark);
+  color: var(--accent);
 }
 
 footer {
   margin-top: auto;
   padding: 20px;
   text-align: center;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.85rem;
 }
 
 footer a {
-  color: var(--accent-dark);
+  color: var(--accent);
   margin: 0 6px;
+}
+
+/* Reduced motion: disable decorative GBA press / hover transforms so users
+   who prefer less motion get a static UI. Core content remains usable. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .adopt-banner:hover,
+  .adopt-banner:active,
+  #send:active {
+    transform: none !important;
+    box-shadow: var(--shadow-pixel) !important;
+  }
 }
