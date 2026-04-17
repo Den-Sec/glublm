@@ -79,3 +79,7 @@ eval/_*.log
 # Launch materials (private, not tracked)
 LAUNCH_KIT.md
 _launch/
+
+# Node
+node_modules/
+tools/node_modules/
