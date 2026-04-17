@@ -1,13 +1,37 @@
 /**
- * Procedural pixel-art goldfish renderer.
- * Draws a 16x16 goldfish directly on an offscreen canvas for each animation frame,
- * then scales up with nearest-neighbor for authentic pixel art.
+ * Pixel-art goldfish renderer.
  *
- * The fish is drawn procedurally (not from a PNG sprite sheet) so we can iterate
- * on the look easily. Swap in a real sprite sheet later by replacing this module.
+ * Dual path:
+ *   1. If desk-pet/assets/sprites/fish-atlas.{png,json} exist and load OK,
+ *      each frame is composed by drawing the matching pose from the atlas
+ *      and overlaying state-specific procedural decor (Z bubbles, sparkles,
+ *      question marks, bubble arc, etc.).
+ *   2. Otherwise the full frame is drawn procedurally — identical behavior
+ *      to what ships before any contributor drops PNG art.
+ *
+ * See CONTRIBUTING-ART.md for the atlas spec.
  */
 
+import { SpriteAtlasLoader } from './sprite-loader.js';
+
 const CELL = 16;
+
+// Which atlas pose backs each animation state. Missing entries fall back
+// to procedural rendering for that anim (still with decor overlays).
+const ANIM_TO_POSE = {
+  idle_swim:   'fish_neutral',
+  talk:        'fish_neutral',     // mouth-open variant picked per-frame in _renderAtlasFrame
+  happy:       'fish_smile',       // loader returns null if smile absent -> falls back
+  sleep:       'fish_eyes_closed',
+  eat:         'fish_neutral',     // mouth-open variant picked per-frame
+  bubble_blow: 'fish_neutral',     // mouth-open variant picked per-frame
+  wiggle:      'fish_neutral',
+  excited:     'fish_neutral',
+  forget:      'fish_neutral',
+  bump_glass:  'fish_neutral',
+  // sad, turn_around: intentionally procedural-only (stretch/limp effects
+  // can't be replicated from a static atlas frame)
+};
 
 // Color palette
 const C = {
@@ -337,15 +361,67 @@ export class SpriteEngine {
     this._elapsed = 0;
     this._finished = false;
     this._cache = new Map(); // "anim_frame" -> offscreen canvas
+
+    // Atlas loader runs async; procedural path renders in the meantime.
+    // Clear the cache once atlas is ready so previously-drawn procedural
+    // frames get rebuilt from the atlas on next request.
+    this._loader = new SpriteAtlasLoader();
+    this._loader.load('./assets/sprites/fish-atlas.png', './assets/sprites/fish-atlas.json')
+      .then((ok) => { if (ok) this._cache.clear(); });
   }
 
   /**
    * Get or create a cached 16x16 offscreen canvas for a specific frame.
+   * Tries the atlas path first; falls back to procedural if the atlas
+   * isn't loaded or the pose we'd need isn't in it.
    * @returns {HTMLCanvasElement}
    */
   _getFrame(animName, frameIdx) {
     const key = `${animName}_${frameIdx}`;
     if (this._cache.has(key)) return this._cache.get(key);
+
+    let off = null;
+    if (this._loader.isReady && ANIM_TO_POSE[animName]) {
+      off = this._renderAtlasFrame(animName, frameIdx);
+    }
+
+    if (!off) {
+      off = document.createElement('canvas');
+      off.width = CELL;
+      off.height = CELL;
+      const px = off.getContext('2d');
+      px.imageSmoothingEnabled = false;
+      px.clearRect(0, 0, CELL, CELL);
+
+      const anim = ANIMS[animName];
+      if (anim) anim.fn(px, frameIdx);
+    }
+
+    this._cache.set(key, off);
+    return off;
+  }
+
+  /**
+   * Build a frame from the atlas, overlaying state-specific procedural
+   * decor (Z bubbles, sparkles, question marks, bubble arc, etc.).
+   * Returns null if no usable atlas pose exists for this anim.
+   */
+  _renderAtlasFrame(animName, frameIdx) {
+    // Pick pose; pay extra for the mouth-open variant on specific frames.
+    let poseName = ANIM_TO_POSE[animName];
+    const needsMouthOpen =
+      (animName === 'talk' && frameIdx % 2 === 0) ||
+      (animName === 'eat' && frameIdx < 2) ||
+      (animName === 'bubble_blow' && frameIdx < 3);
+    let frame = null;
+    let usedMouthOpenPose = false;
+    if (needsMouthOpen) {
+      frame = this._loader.getFrame('fish_mouth_open');
+      if (frame) { poseName = 'fish_mouth_open'; usedMouthOpenPose = true; }
+    }
+    if (!frame) frame = this._loader.getFrame(poseName);
+    if (!frame) frame = this._loader.getFrame('fish_neutral'); // universal fallback
+    if (!frame) return null;
 
     const off = document.createElement('canvas');
     off.width = CELL;
@@ -354,11 +430,81 @@ export class SpriteEngine {
     px.imageSmoothingEnabled = false;
     px.clearRect(0, 0, CELL, CELL);
 
-    const anim = ANIMS[animName];
-    if (anim) anim.fn(px, frameIdx);
+    // idle_swim gets a gentle 1px vertical bob as a proxy for tail animation.
+    let yOffset = 0;
+    if (animName === 'idle_swim') {
+      const tailOffsets = [0, -1, 0, 1];
+      yOffset = tailOffsets[frameIdx] || 0;
+    }
 
-    this._cache.set(key, off);
+    px.save();
+    if (yOffset) px.translate(0, yOffset);
+    // Normalize atlas pose to 16x16 regardless of source frame size.
+    px.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, 0, 0, CELL, CELL);
+    px.restore();
+
+    // If the anim wants mouth open but the atlas doesn't have that pose,
+    // paint the red mouth pixels on top so the user still sees a talking fish.
+    if (needsMouthOpen && !usedMouthOpenPose) {
+      px.fillStyle = C.M;
+      px.fillRect(13, 8, 1, 1);
+      px.fillRect(13, 9, 1, 1);
+    }
+
+    this._overlayDecor(px, animName, frameIdx);
     return off;
+  }
+
+  /**
+   * Paint the procedural extras that the atlas doesn't carry (Z bubbles,
+   * sparkles, question marks, etc.). Coordinates mirror the procedural
+   * frame_* functions above so the look stays consistent.
+   */
+  _overlayDecor(px, animName, frameIdx) {
+    if (animName === 'sleep') {
+      const zPos = [[12, 3], [13, 2], [14, 1]];
+      for (let i = 0; i <= Math.min(frameIdx, 2); i++) {
+        px.fillStyle = '#7bb8e0';
+        px.fillRect(zPos[i][0], zPos[i][1], 1, 1);
+        if (i < 2) px.fillRect(zPos[i][0] + 1, zPos[i][1], 1, 1);
+      }
+    } else if (animName === 'happy' && (frameIdx === 0 || frameIdx === 2)) {
+      px.fillStyle = C.W;
+      px.fillRect(13, 3, 1, 1);
+      px.fillRect(14, 4, 1, 1);
+    } else if (animName === 'excited') {
+      px.fillStyle = '#ffdd44';
+      px.fillRect(13, 2, 1, 1);
+      px.fillRect(13, 3, 1, 1);
+      px.fillRect(13, 5, 1, 1);
+    } else if (animName === 'forget' && frameIdx >= 1) {
+      px.fillStyle = '#7bb8e0';
+      px.fillRect(12, 1, 1, 1);
+      px.fillRect(13, 1, 1, 1);
+      px.fillRect(14, 1, 1, 1);
+      px.fillRect(14, 2, 1, 1);
+      px.fillRect(13, 3, 1, 1);
+      if (frameIdx >= 2) px.fillRect(13, 5, 1, 1);
+    } else if (animName === 'bubble_blow') {
+      const sizes = [0, 1, 1.5, 2, 2.5];
+      const r = sizes[frameIdx] || 0;
+      if (r > 0) {
+        px.strokeStyle = '#88ccee';
+        px.lineWidth = 0.5;
+        px.beginPath();
+        px.arc(14, 6 - frameIdx, r, 0, Math.PI * 2);
+        px.stroke();
+      }
+    } else if (animName === 'eat' && frameIdx === 0) {
+      px.fillStyle = '#8B4513';
+      px.fillRect(14, 7, 1, 1);
+      px.fillRect(14, 8, 1, 1);
+    } else if (animName === 'bump_glass' && (frameIdx === 0 || frameIdx === 1)) {
+      px.fillStyle = C.W;
+      px.fillRect(14, 6, 1, 1);
+      px.fillRect(15, 8, 1, 1);
+      px.fillRect(14, 10, 1, 1);
+    }
   }
 
   /** Switch to a different animation state. */
