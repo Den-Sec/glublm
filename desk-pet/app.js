@@ -99,6 +99,7 @@ function getFishSize() {
 // ============================================================
 async function handleChat(text) {
   if (chatBusy || !text.trim()) return;
+  if (modelLoadFailed || !model.isReady) return;
   chatBusy = true;
   promptEl.disabled = true;
   sendEl.disabled = true;
