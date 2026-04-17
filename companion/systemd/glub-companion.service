@@ -1,0 +1,48 @@
+[Unit]
+Description=GlubLM companion server (virtual goldfish with needs)
+Documentation=https://github.com/Den-Sec/glublm/blob/master/companion/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# Adjust these three paths if you cloned the repo somewhere other than /opt/glub.
+# The WorkingDirectory must be the companion/ subdirectory so the server can
+# resolve ../desk-pet/model.onnx via relative path.
+User=glub
+Group=glub
+WorkingDirectory=/opt/glub/companion
+
+# Environment
+Environment=NODE_ENV=production
+Environment=PORT=3210
+Environment=STATE_FILE=/var/lib/glub/pet-state.json
+
+# Start / restart policy
+ExecStart=/usr/bin/node server/index.js
+Restart=always
+RestartSec=5s
+
+# Give the pet state directory to the glub user on boot (ignored if already exists).
+ExecStartPre=/usr/bin/install -d -o glub -g glub /var/lib/glub
+
+# Hardening: the server reads its own repo and writes only to /var/lib/glub.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ReadWritePaths=/var/lib/glub
+
+# The server does its own graceful shutdown (SIGINT/SIGTERM handlers save state).
+KillSignal=SIGTERM
+TimeoutStopSec=10s
+
+# The persistence layer crashes hard on save failure (by design — see B2),
+# systemd will back off RestartSec between attempts.
+StartLimitIntervalSec=60
+StartLimitBurst=6
+
+[Install]
+WantedBy=multi-user.target
