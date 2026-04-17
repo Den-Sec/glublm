@@ -10,8 +10,13 @@ export class Persistence {
   save(petState) {
     const json = petState.serialize();
     const tmp = this._path + '.tmp';
-    fs.writeFileSync(tmp, json, 'utf-8');
-    fs.renameSync(tmp, this._path);
+    try {
+      fs.writeFileSync(tmp, json, 'utf-8');
+      fs.renameSync(tmp, this._path);
+    } catch (err) {
+      console.error('[glub] Fatal: persistence save failed:', err);
+      process.exit(1);
+    }
   }
 
   load() {
