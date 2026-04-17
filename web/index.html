@@ -5,7 +5,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; connect-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" />
   <title>GlubLM - the language model that already forgot this sentence</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="A 35M-parameter goldfish language model with a 10-second memory. Runs 100% in your browser." />
+  <meta name="description" content="A 36M-parameter goldfish language model with a 10-second memory. Runs 100% in your browser." />
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
   <link rel="stylesheet" href="style.css" />
   <!-- ONNX Runtime Web -->
@@ -36,6 +36,12 @@
     <img src="assets/logo.svg" alt="GlubLM goldfish logo" class="logo" />
     <h1>GlubLM</h1>
     <p class="tagline">the language model that already forgot this sentence</p>
+    <div class="metric-strip" aria-label="model specs">
+      <span class="metric"><span class="metric-value">36M</span><em>params</em></span>
+      <span class="metric"><span class="metric-value">96</span><em>token context</em></span>
+      <span class="metric"><span class="metric-value">15 min</span><em>training</em></span>
+      <span class="metric"><span class="metric-value">40 MB</span><em>in browser</em></span>
+    </div>
   </header>
 
   <main>
@@ -52,7 +58,7 @@
     <details class="about">
       <summary>about</summary>
       <p>
-        <strong>GlubLM</strong> is a 35-million-parameter transformer that pretends to be a goldfish.
+        <strong>GlubLM</strong> is a 36-million-parameter transformer that pretends to be a goldfish.
         It has a hard 96-token context window, so it literally forgets everything after a sentence or two.
         The model runs 100% in your browser via ONNX Runtime Web - no server, no data leaves your device.
       </p>
@@ -62,6 +68,18 @@
       </p>
     </details>
   </main>
+
+  <figure class="hero-visual">
+    <img src="assets/hero-chat.png" alt="Pixel-art goldfish in a fishbowl answering 'what is life?' with 'this. this water. this bowl. this life. it's everything to me.'" />
+    <figcaption>the desk pet companion - <a href="desk-pet/">adopt glub →</a></figcaption>
+  </figure>
+
+  <nav class="links-grid" aria-label="project links">
+    <a href="https://github.com/Den-Sec/glublm">source</a>
+    <a href="https://huggingface.co/DenSec02/glublm-36m">model</a>
+    <a href="https://huggingface.co/datasets/DenSec02/glublm-60k-ted">dataset</a>
+    <a href="https://colab.research.google.com/github/Den-Sec/glublm/blob/master/notebooks/train_colab.ipynb">colab</a>
+  </nav>
 
   <footer>
     <small>

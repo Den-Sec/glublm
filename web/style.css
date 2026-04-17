@@ -103,6 +103,102 @@ h1 {
   font-size: 0.95rem;
 }
 
+.metric-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 20px auto 0;
+  max-width: 640px;
+}
+.metric {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-secondary);
+  box-shadow: var(--shadow-pixel);
+  min-width: 90px;
+}
+.metric-value {
+  font-family: "Press Start 2P", "Courier New", monospace;
+  font-size: 0.95rem;
+  color: var(--accent);
+  line-height: 1.1;
+}
+.metric em {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-style: normal;
+  margin-top: 6px;
+  letter-spacing: 0.03em;
+}
+
+.hero-visual {
+  max-width: 640px;
+  margin: 30px auto 20px;
+  text-align: center;
+}
+.hero-visual img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border: 2px solid var(--border-primary);
+  box-shadow: var(--shadow-pixel);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.hero-visual figcaption {
+  margin-top: 14px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+.hero-visual a {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+.hero-visual a:hover {
+  text-decoration: underline;
+}
+
+.links-grid {
+  max-width: 640px;
+  margin: 20px auto 40px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.links-grid a {
+  display: block;
+  padding: 12px 8px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-secondary);
+  box-shadow: var(--shadow-pixel);
+  color: var(--accent);
+  text-align: center;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: transform 0.05s ease-out, box-shadow 0.05s ease-out;
+}
+.links-grid a:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.5);
+  color: var(--accent-deeper);
+}
+.links-grid a:active {
+  transform: translate(0, 0);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 520px) {
+  .links-grid { grid-template-columns: repeat(2, 1fr); }
+  .metric { min-width: 0; flex: 1 1 calc(50% - 10px); }
+}
+
 main {
   width: 100%;
   max-width: 640px;
@@ -258,6 +354,8 @@ footer a {
   }
   .adopt-banner:hover,
   .adopt-banner:active,
+  .links-grid a:hover,
+  .links-grid a:active,
   #send:active {
     transform: none !important;
     box-shadow: var(--shadow-pixel) !important;
