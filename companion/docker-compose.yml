@@ -1,0 +1,25 @@
+services:
+  companion:
+    build:
+      # Build context is the repo root so the Dockerfile can access both
+      # companion/ and desk-pet/ (model + tokenizer).
+      context: ..
+      dockerfile: companion/Dockerfile
+    image: glub-companion:latest
+    container_name: glub-companion
+    ports:
+      - "3210:3210"
+    environment:
+      # Override PORT here if 3210 is already taken on the host.
+      PORT: 3210
+      STATE_FILE: /app/state/pet-state.json
+    volumes:
+      # Named volume keeps pet-state.json across `docker compose down`.
+      # Remove with `docker compose down -v` (resets your fish).
+      - glub_state:/app/state
+    restart: unless-stopped
+    # 256 MB is comfortable for a 36M-param ONNX model + Node runtime.
+    mem_limit: 512m
+
+volumes:
+  glub_state:
