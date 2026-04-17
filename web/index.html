@@ -11,6 +11,20 @@
   <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.min.js"
           integrity="sha384-4uQjzVxVRlLf2zq2sqRNKh3IzetqQzu15fI6xgLQzhXYGJMtTZc/fvdszanED0Zp"
           crossorigin="anonymous"></script>
+
+  <!--
+  Optional analytics (GoatCounter). Uncomment the <script> below AND update
+  the CSP above to include your GoatCounter host in script-src and connect-src.
+  Docs: docs/ANALYTICS.md. Desk-pet is deliberately never tracked (offline PWA).
+
+  Example CSP (replace YOUR-GC-HOST):
+    script-src 'self' https://cdn.jsdelivr.net https://YOUR-GC-HOST 'wasm-unsafe-eval';
+    connect-src 'self' https://cdn.jsdelivr.net https://YOUR-GC-HOST;
+  -->
+  <!--
+  <script data-goatcounter="https://YOUR-GC-HOST/count"
+          async src="https://YOUR-GC-HOST/count.js"></script>
+  -->
 </head>
 <body>
   <a class="adopt-banner" href="desk-pet/">
