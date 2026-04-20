@@ -85,6 +85,14 @@ function serveStatic(req, res) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(pet.snapshot()));
     return;
+  } else if (url.pathname === '/health') {
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-store',
+    });
+    res.end(JSON.stringify({ status: 'ok', uptime_s: Math.floor(process.uptime()) }));
+    return;
   } else if (url.pathname === '/') {
     res.writeHead(302, { Location: '/aquarium/' });
     res.end();

@@ -203,7 +203,7 @@ html, body {
 /* Settings button */
 #settings-btn {
   position: fixed;
-  top: max(16px, env(safe-area-inset-top));
+  top: max(40px, calc(env(safe-area-inset-top) + 36px));
   right: 16px;
   width: 36px;
   height: 36px;
@@ -464,10 +464,73 @@ html, body {
   .onboarding-box { animation: none !important; }
 }
 
+/* Cross-navigation bar (desk-pet <-> aquarium <-> controller <-> github).
+   Fixed overlay - does not shrink the canvas, preserves immersive layout.
+   Translucent background + subtle blur so the fish stays visible behind. */
+.cross-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 0;
+  background: rgba(12, 30, 48, 0.78);
+  border-bottom: 1px solid #1c3a52;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 50;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  text-transform: lowercase;
+}
+.cross-nav .nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  color: #7fb4d4;
+  text-decoration: none;
+  transition: color 0.15s, background 0.15s;
+  position: relative;
+}
+.cross-nav .nav-link:hover { color: #c0e4f4; background: rgba(74, 154, 190, 0.15); }
+.cross-nav .nav-link.active { color: #ff8b3d; font-weight: 700; }
+.cross-nav .nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 0;
+  height: 2px;
+  background: #ff8b3d;
+}
+/* Live indicator: green dot when companion health probe succeeded. */
+.cross-nav .nav-link.live::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6be86b;
+  margin-right: 6px;
+  box-shadow: 0 0 4px #6be86b;
+}
+@media (max-width: 520px) {
+  .cross-nav { font-size: 0.64rem; }
+  .cross-nav .nav-link { padding: 0 8px; letter-spacing: 0.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cross-nav .nav-link { transition: none; }
+  .cross-nav .nav-link.live::before { box-shadow: none; }
+}
+
 /* Brand mark top-left */
 #brand {
   position: fixed;
-  top: max(16px, env(safe-area-inset-top));
+  top: max(40px, calc(env(safe-area-inset-top) + 36px));
   left: 16px;
   font-family: "Courier New", "Consolas", monospace;
   font-size: 0.7rem;

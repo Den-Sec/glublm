@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; connect-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; connect-src 'self' https://cdn.jsdelivr.net http://localhost:3210; img-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" />
   <title>GlubLM Desk Pet - adopt a goldfish in your browser</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes" />
   <meta name="description" content="A 36M-parameter goldfish LLM that forgets you after 96 tokens. Runs entirely in your browser as an installable PWA - no backend, no accounts, no tracking. Adopt the fish." />
@@ -41,6 +41,13 @@
 </head>
 <body>
   <a class="sr-only sr-skip-link" href="#prompt">skip to chat</a>
+
+  <nav class="cross-nav" aria-label="GlubLM surfaces">
+    <a href="./" class="nav-link active" aria-current="page">desk pet</a>
+    <a href="https://github.com/Den-Sec/glublm#companion-server" class="nav-link" data-surface="aquarium" title="requires local companion server">aquarium</a>
+    <a href="https://github.com/Den-Sec/glublm#companion-server" class="nav-link" data-surface="controller" title="requires local companion server">controller</a>
+    <a href="https://github.com/Den-Sec/glublm" class="nav-link nav-link-external" target="_blank" rel="noopener">github</a>
+  </nav>
 
   <main id="main">
   <div id="brand" aria-hidden="true">glub</div>
@@ -109,6 +116,20 @@
     <button id="ios-install-dismiss" type="button">got it</button>
   </div>
   </main>
+
+  <script>
+    (async () => {
+      try {
+        const r = await fetch('http://localhost:3210/health', { signal: AbortSignal.timeout(500), mode: 'cors' });
+        if (!r.ok) return;
+        document.querySelectorAll('.cross-nav [data-surface]').forEach(a => {
+          a.href = `http://localhost:3210/${a.dataset.surface}/`;
+          a.classList.add('live');
+          a.removeAttribute('title');
+        });
+      } catch (e) { /* companion not running - github fallback remains */ }
+    })();
+  </script>
 
   <script type="module" src="app.js"></script>
 </body>

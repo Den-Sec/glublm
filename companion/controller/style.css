@@ -22,8 +22,55 @@ html, body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 12px;
-  padding-bottom: 72px;
+  padding: 44px 12px 72px;
+}
+
+/* Cross-navigation bar (desk-pet <-> aquarium <-> controller <-> github). */
+.cross-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  background: rgba(10, 23, 40, 0.92);
+  border-bottom: 1px solid #1c3a52;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 50;
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  text-transform: lowercase;
+}
+.cross-nav .nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  color: #7fb4d4;
+  text-decoration: none;
+  position: relative;
+  transition: color 0.15s, background 0.15s;
+}
+.cross-nav .nav-link:hover { color: #c0e4f4; background: rgba(74, 154, 190, 0.15); }
+.cross-nav .nav-link.active { color: #ff8b3d; font-weight: 700; }
+.cross-nav .nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 0;
+  height: 2px;
+  background: #ff8b3d;
+}
+@media (max-width: 520px) {
+  .cross-nav { font-size: 0.64rem; }
+  .cross-nav .nav-link { padding: 0 8px; letter-spacing: 0.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cross-nav .nav-link { transition: none; }
 }
 
 #main {
