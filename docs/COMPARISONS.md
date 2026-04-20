@@ -32,8 +32,8 @@ This document records the empirical comparison between GlubLM and its inspiratio
 |--------|---------|--------|
 | Total parameters | ~8.7M | 36,055,680 |
 | Test perplexity (held-out) | N/A (not reported) | 3.28 |
-| Forward passes/sec (batch 1, seq 96, RTX 3060) | N/A | TBD |
-| Generated tokens/sec (batch 1, RTX 3060) | N/A | TBD |
+| Forward passes/sec (batch 1, seq 96, RTX 3060 / CPU) | N/A | 86 / 21 |
+| Generated tokens/sec (batch 1, max_new 50, T=0.6, RTX 3060 / CPU) | N/A | 76 / 40 |
 | Browser ONNX size (uint8) | ~10 MB | ~40 MB |
 
 ## Qualitative samples
@@ -78,11 +78,13 @@ The 96-token hard cap creates narratively coherent "forgetting" - the goldfish n
 
 ## Reproducibility
 
-All results can be reproduced by running:
+Throughput row reproduced with:
 
 ```bash
 pip install glublm
-python tools/benchmark.py --ckpt checkpoints/glublm_60k_15ep.pt --tokenizer checkpoints/tokenizer_60k.json
+python scripts/bench_inference.py \
+    --ckpt checkpoints/glublm_35m_v52.pt \
+    --tokenizer checkpoints/tokenizer_35m_v52.json
 ```
 
-Full results are in [`bench_results.json`](bench_results.json).
+Measured on an RTX 3060 + Ryzen host, PyTorch 2.5.1+cu121, 100 forward-pass iterations (10 warmup), 30 generate iterations (5 warmup).
