@@ -1,0 +1,66 @@
+name: lighthouse
+
+on:
+  workflow_run:
+    workflows: ["deploy-pages"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Wait for GitHub Pages to settle
+        if: github.event_name == 'workflow_run'
+        run: sleep 30
+
+      - name: Audit landing
+        run: bash scripts/lighthouse.sh https://den-sec.github.io/glublm/ ./reports/lighthouse
+
+      - name: Audit desk-pet
+        run: bash scripts/lighthouse.sh https://den-sec.github.io/glublm/desk-pet/ ./reports/lighthouse
+
+      - name: Check score budget
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          const dir = './reports/lighthouse';
+          const budget = { performance: 75, accessibility: 90, 'best-practices': 70, seo: 90 };
+          const files = fs.readdirSync(dir).filter(f => f.endsWith('.report.json'));
+          let failed = false;
+          for (const f of files) {
+            const r = JSON.parse(fs.readFileSync(path.join(dir, f)));
+            const c = r.categories || {};
+            const url = r.finalUrl || r.requestedUrl || f;
+            console.log(`\n=== ${url} ===`);
+            for (const [k, min] of Object.entries(budget)) {
+              const score = c[k] ? Math.round(c[k].score * 100) : null;
+              const tag = score === null ? '?' : score >= min ? 'OK' : 'FAIL';
+              console.log(`  ${tag.padEnd(4)} ${k.padEnd(16)} ${score ?? '-'} (budget ${min})`);
+              if (score !== null && score < min) failed = true;
+            }
+          }
+          if (failed) {
+            console.error('\nBudget violation - failing workflow');
+            process.exit(1);
+          }
+          EOF
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-reports
+          path: reports/lighthouse/
+          retention-days: 7
