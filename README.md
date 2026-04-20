@@ -133,6 +133,12 @@ Total: **~2,250 lines of vanilla JS across 10 modules**. No React, no build tool
 
 The companion system evolves the desk pet from a standalone demo into a persistent virtual pet with biological needs and personality growth.
 
+<p align="center">
+  <img src="desk-pet/assets/screenshots/companion-aquarium.png" alt="Aquarium display - pixel-art goldfish swimming in a bowl with the cross-surface nav bar on top" width="520">
+  &nbsp;&nbsp;
+  <img src="desk-pet/assets/screenshots/companion-controller.png" alt="Phone controller - hunger, water, happiness, health and bond stat bars, action buttons, and chat input" width="220">
+</p>
+
 ### What it does
 
 - **The fish lives on a server.** It continues to exist (and get hungry) whether anyone is watching or not. State persists to disk and survives restarts.
