@@ -86,3 +86,9 @@ _launch/
 # Node
 node_modules/
 tools/node_modules/
+
+# Temp files (e.g., companion/pet-state.json.tmp from atomic writes)
+*.tmp
+
+# Claude Code plugin sandbox
+.superpowers/
