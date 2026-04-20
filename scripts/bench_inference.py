@@ -33,8 +33,17 @@ def load(ckpt_path: Path, tok_path: Path, device: torch.device) -> tuple[GlubLM,
     tok = GlubTokenizer.from_file(str(tok_path))
     cfg = ModelConfig(vocab_size=tok.vocab_size)
     model = GlubLM(cfg).to(device)
-    state = torch.load(str(ckpt_path), map_location=device, weights_only=True)
-    model.load_state_dict(state.get("model", state))
+    if ckpt_path.suffix == ".safetensors":
+        from safetensors.torch import load_file
+        state = load_file(str(ckpt_path), device=str(device))
+    else:
+        state = torch.load(str(ckpt_path), map_location=device, weights_only=True)
+    weights = state.get("model", state) if isinstance(state, dict) else state
+    # HF safetensors export strips `lm_head.weight` when weights are tied,
+    # so fall back to strict=False and re-tie from embedding afterwards.
+    model.load_state_dict(weights, strict=False)
+    if cfg.tie_embeddings:
+        model.lm_head.weight = model.embedding.weight
     model.eval()
     return model, tok
 

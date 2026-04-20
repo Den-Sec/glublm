@@ -78,13 +78,21 @@ The 96-token hard cap creates narratively coherent "forgetting" - the goldfish n
 
 ## Reproducibility
 
-Throughput row reproduced with:
+Throughput row reproduced from a clone of this repo plus the safetensors + tokenizer from HuggingFace:
 
 ```bash
-pip install glublm
+git clone https://github.com/Den-Sec/glublm.git
+cd glublm
+pip install -e .
+
+# Fetch weights + tokenizer (144 MB safetensors + 200 KB tokenizer JSON)
+python -c "from huggingface_hub import hf_hub_download; \
+  hf_hub_download('DenSec02/glublm-36m', 'model.safetensors', local_dir='checkpoints'); \
+  hf_hub_download('DenSec02/glublm-36m', 'tokenizer.json', local_dir='checkpoints')"
+
 python scripts/bench_inference.py \
-    --ckpt checkpoints/glublm_35m_v52.pt \
-    --tokenizer checkpoints/tokenizer_35m_v52.json
+    --ckpt checkpoints/model.safetensors \
+    --tokenizer checkpoints/tokenizer.json
 ```
 
-Measured on an RTX 3060 + Ryzen host, PyTorch 2.5.1+cu121, 100 forward-pass iterations (10 warmup), 30 generate iterations (5 warmup).
+The script auto-detects `.safetensors` vs `.pt` from the extension. Measured on an RTX 3060 + Ryzen host, PyTorch 2.5.1+cu121, 100 forward-pass iterations (10 warmup), 30 generate iterations (5 warmup).
