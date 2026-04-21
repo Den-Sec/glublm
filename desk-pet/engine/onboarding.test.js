@@ -109,3 +109,43 @@ test('onboarding: runOnboarding aborts on abortSignal and marks v2 flag', async 
 
   assert.equal(ls.glub_onboarded_v2, '1');
 });
+
+test('onboarding: showTutorial({force:true}) runs even if v2 flag set', async () => {
+  const ls = installLocalStorageStub({ glub_onboarded_v2: '1' });
+  installMatchMediaStub();
+  const dom = installDomStub();
+  dom.register('onboarding-overlay');
+  dom.register('onboarding-cue');
+  dom.register('.onboarding-text');
+  const { showTutorial, setDeps } = await loadModule();
+  setDeps({
+    haptic: { pulse: () => {} },
+    speech: { show: () => {} },
+    fsm: { transition: () => true },
+    STATES: {},
+    getFishRect: () => ({ left: 0, top: 0, width: 16, height: 16 }),
+  });
+
+  const ac = new AbortController();
+  const p = showTutorial({ force: true, signal: ac.signal });
+  ac.abort();
+  await p;
+
+  // flag still set (does not reset)
+  assert.equal(ls.glub_onboarded_v2, '1');
+});
+
+test('onboarding: showTutorial({force:false}) skips if flag set', async () => {
+  installLocalStorageStub({ glub_onboarded_v2: '1' });
+  installMatchMediaStub();
+  installDomStub();
+  const { showTutorial, setDeps } = await loadModule();
+  setDeps({ haptic: {pulse:()=>{}}, getFishRect: () => null });
+
+  let ran = false;
+  const overlay = globalThis.document.getElementById('onboarding-overlay');
+  if (overlay) overlay.classList.add = () => { ran = true; };
+
+  await showTutorial({ force: false });
+  assert.equal(ran, false);
+});

@@ -138,7 +138,7 @@ export async function runOnboarding({ signal } = {}) {
   }
 }
 
-export function showTutorial() {
-  // implemented in Task 9
-  runOnboarding();
+export function showTutorial({ force = true, signal } = {}) {
+  if (!force && !shouldShowOnboarding()) return Promise.resolve();
+  return runOnboarding({ signal });
 }
