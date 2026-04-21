@@ -10,6 +10,10 @@ export const PRESET_IDS = [
   'excited_celebration',
 ];
 
+const THROTTLE_MS = {
+  bubble_pop: 500,
+};
+
 // envelope + oscillator scheduling helper
 function scheduleTone(ctx, master, {
   wave = 'sine',
@@ -185,6 +189,13 @@ export class SoundEngine {
     if (!fn) {
       if (!PRESET_IDS.includes(presetId)) throw new Error(`Unknown sound preset: ${presetId}`);
       return false; // declared but not yet implemented
+    }
+    const throttle = THROTTLE_MS[presetId];
+    if (throttle) {
+      const last = this._lastPlayAt.get(presetId) ?? 0;
+      const now = Date.now();
+      if (now - last < throttle) return false;
+      this._lastPlayAt.set(presetId, now);
     }
     fn(this._ctx, this._master);
     return true;

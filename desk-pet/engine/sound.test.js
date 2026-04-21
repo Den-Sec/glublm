@@ -156,3 +156,46 @@ test('SoundEngine: nom_nom_eat schedules 3 oscillators (3 bursts)', async () => 
   s.play('nom_nom_eat');
   assert.equal(registry.last._oscillators.length, before + 3);
 });
+
+test('SoundEngine: bubble_pop throttled to max 1 per 500ms', async () => {
+  const registry = installAudioStub();
+  const { SoundEngine } = await loadModule();
+  const s = new SoundEngine({ enabled: true });
+  s.unlock();
+
+  // Fake clock via monkey-patch Date.now used internally
+  let now = 1000;
+  const origNow = Date.now;
+  Date.now = () => now;
+
+  try {
+    // 3 rapid spawns in 100ms
+    const r1 = s.play('bubble_pop'); now += 100;
+    const r2 = s.play('bubble_pop'); now += 100;
+    const r3 = s.play('bubble_pop');
+
+    // First allowed, second + third throttled
+    assert.equal(r1, true);
+    assert.equal(r2, false);
+    assert.equal(r3, false);
+
+    // After 500ms window, allowed again
+    now += 400; // total 600ms since first
+    const r4 = s.play('bubble_pop');
+    assert.equal(r4, true);
+  } finally {
+    Date.now = origNow;
+  }
+});
+
+test('SoundEngine: other presets NOT throttled', async () => {
+  const registry = installAudioStub();
+  const { SoundEngine } = await loadModule();
+  const s = new SoundEngine({ enabled: true });
+  s.unlock();
+
+  // 3 rapid chat_send in same tick should all succeed
+  assert.equal(s.play('chat_send'), true);
+  assert.equal(s.play('chat_send'), true);
+  assert.equal(s.play('chat_send'), true);
+});
