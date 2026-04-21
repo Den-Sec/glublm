@@ -72,6 +72,7 @@
       <p class="onboarding-text"></p>
       <button type="button" id="onboarding-skip" aria-label="Skip onboarding">skip</button>
     </div>
+    <div id="onboarding-cue" class="onboarding-cue hidden" aria-hidden="true"></div>
   </div>
 
   <div id="chat-input" class="hidden">
@@ -98,6 +99,15 @@
         <span>fish name</span>
         <input id="fish-name" type="text" placeholder="glub" maxlength="16" />
       </label>
+      <label class="settings-row">
+        <span>sounds</span>
+        <input type="checkbox" id="audio-enabled" checked>
+      </label>
+      <label class="settings-row">
+        <span>haptic (mobile)</span>
+        <input type="checkbox" id="haptic-enabled" checked>
+      </label>
+      <button type="button" id="replay-tutorial" class="settings-action">show tutorial again</button>
       <div class="settings-footer">
         <a href="https://github.com/Den-Sec/glublm" target="_blank" rel="noopener">about</a>
         <button id="settings-done" type="button">done</button>

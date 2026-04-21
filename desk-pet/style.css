@@ -564,3 +564,63 @@ html, body {
   background: #122a42;
   border-color: #4a9abe;
 }
+
+/* --- Cluster B: settings checkbox rows (sounds / haptic) ---
+   Existing .settings-box label is column-flex for select/text inputs.
+   Checkboxes benefit from a horizontal row layout so the toggle sits
+   next to its label. The .settings-row override flips flex-direction
+   without changing the other labels. */
+.settings-box label.settings-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.settings-box label.settings-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #ff8b3d;
+  cursor: pointer;
+  margin: 0;
+}
+
+/* --- Cluster B: onboarding pulsing cue --- */
+.onboarding-cue {
+  position: absolute;
+  pointer-events: none;
+  border: 3px solid #ff8b3d;
+  border-radius: 50%;
+  box-sizing: border-box;
+  left: 0; top: 0;
+  width: 48px; height: 48px;
+  animation: onboardingPulse 1.2s ease-out infinite;
+  z-index: 1001;
+}
+.onboarding-cue.hidden { display: none; }
+
+@keyframes onboardingPulse {
+  0%   { transform: scale(1);    opacity: 0.9; }
+  100% { transform: scale(1.8);  opacity: 0; }
+}
+
+/* --- settings: replay button + feature-unavailable hide --- */
+.settings-action {
+  display: block;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #ff8b3d;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+}
+.settings-action:hover { background: #e67a2f; }
+
+body[data-no-audio]  .settings-row:has(#audio-enabled)  { display: none; }
+body[data-no-haptic] .settings-row:has(#haptic-enabled) { display: none; }
+
+/* --- a11y: prefers-reduced-motion disables onboarding cue animation --- */
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-cue { animation: none; display: none; }
+}
