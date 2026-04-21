@@ -74,10 +74,68 @@ export const HINTS = [
   },
 ];
 
-// Runtime (overlay + pulsing cue + loop) lives in later task - stub for now:
-export function runOnboarding() {
-  // implemented in Task 8
-  markOnboarded();
+function sleep(ms, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new DOMException('Aborted', 'AbortError'));
+    const t = setTimeout(resolve, ms);
+    signal?.addEventListener('abort', () => { clearTimeout(t); reject(new DOMException('Aborted', 'AbortError')); }, { once: true });
+  });
+}
+
+function setCuePosition(cue, rect) {
+  if (!cue || !rect) return;
+  const size = Math.max(48, Math.max(rect.width, rect.height) + 16);
+  cue.style.left = `${rect.left + rect.width / 2 - size / 2}px`;
+  cue.style.top = `${rect.top + rect.height / 2 - size / 2}px`;
+  cue.style.width = `${size}px`;
+  cue.style.height = `${size}px`;
+}
+
+function prefersReducedMotion() {
+  if (typeof globalThis.matchMedia !== 'function') return false;
+  return !!globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+export async function runOnboarding({ signal } = {}) {
+  const doc = globalThis.document;
+  const overlay = doc?.getElementById?.('onboarding-overlay');
+  const cue = doc?.getElementById?.('onboarding-cue');
+  const textEl = doc?.querySelector?.('.onboarding-text');
+  const reduced = prefersReducedMotion();
+
+  if (overlay) overlay.classList?.add('visible');
+  if (cue) cue.classList?.[reduced ? 'add' : 'remove']('hidden');
+
+  try {
+    for (const hint of HINTS) {
+      if (signal?.aborted) break;
+      if (textEl) textEl.textContent = hint.text;
+
+      // position pulsing cue + start polling (100ms) to keep it on-target
+      let pollTimer = null;
+      if (!reduced && cue) {
+        const update = () => setCuePosition(cue, hint.target());
+        update();
+        pollTimer = setInterval(update, 100);
+      }
+
+      try {
+        if (!reduced) {
+          // Kick off scripted demo (fire-and-forget; errors swallowed)
+          hint.demo?.().catch(() => {});
+        }
+        await sleep(reduced ? 2000 : hint.duration, signal);
+      } finally {
+        if (pollTimer) clearInterval(pollTimer);
+      }
+    }
+  } catch (err) {
+    if (err?.name !== 'AbortError') throw err;
+  } finally {
+    if (overlay) overlay.classList?.remove('visible');
+    if (cue) cue.classList?.add('hidden');
+    markOnboarded();
+  }
 }
 
 export function showTutorial() {

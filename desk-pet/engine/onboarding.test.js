@@ -56,3 +56,56 @@ test('onboarding: HINTS array has 3 entries with id + text + target + demo', asy
     assert.ok(typeof h.demo === 'function');
   }
 });
+
+// Minimal DOM stub factory for onboarding loop tests.
+function installDomStub() {
+  const elements = new Map();
+  const createEl = () => ({
+    classList: { add: () => {}, remove: () => {}, toggle: () => {} },
+    style: {},
+    textContent: '',
+    setAttribute: () => {},
+    getAttribute: () => null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    appendChild: () => {},
+    removeChild: () => {},
+    focus: () => {},
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }),
+  });
+  globalThis.document = {
+    getElementById: (id) => elements.get(id) ?? null,
+    querySelector: (sel) => elements.get(sel) ?? null,
+    createElement: () => createEl(),
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    body: createEl(),
+  };
+  const register = (key, el = createEl()) => { elements.set(key, el); return el; };
+  return { register };
+}
+
+test('onboarding: runOnboarding aborts on abortSignal and marks v2 flag', async () => {
+  const ls = installLocalStorageStub({});
+  installMatchMediaStub();
+  const dom = installDomStub();
+  dom.register('onboarding-overlay');
+  dom.register('onboarding-cue');
+  dom.register('.onboarding-text');
+  const { runOnboarding, setDeps } = await loadModule();
+  setDeps({
+    haptic: { pulse: () => {} },
+    sound: { play: () => {} },
+    speech: { show: () => {} },
+    fsm: { transition: () => true },
+    STATES: { HAPPY: 'HAPPY', EXCITED: 'EXCITED' },
+    getFishRect: () => ({ left: 0, top: 0, width: 16, height: 16 }),
+  });
+
+  const ac = new AbortController();
+  const p = runOnboarding({ signal: ac.signal });
+  ac.abort(); // early dismiss immediately
+  await p;
+
+  assert.equal(ls.glub_onboarded_v2, '1');
+});
