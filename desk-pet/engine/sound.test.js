@@ -124,3 +124,35 @@ test('SoundEngine: play() when disabled is silent no-op', async () => {
   assert.equal(result, false);
   assert.equal(registry.last._oscillators.length, 0);
 });
+
+test('SoundEngine: all 6 presets callable without throw', async () => {
+  const registry = installAudioStub();
+  const { SoundEngine, PRESET_IDS } = await loadModule();
+  const s = new SoundEngine({ enabled: true });
+  s.unlock();
+  for (const id of PRESET_IDS) {
+    const result = s.play(id);
+    assert.equal(result, true, `preset ${id} did not play`);
+  }
+});
+
+test('SoundEngine: excited_celebration schedules 3 oscillators (arpeggio)', async () => {
+  const registry = installAudioStub();
+  const { SoundEngine } = await loadModule();
+  const s = new SoundEngine({ enabled: true });
+  s.unlock();
+  const before = registry.last._oscillators.length;
+  s.play('excited_celebration');
+  // 3-note arpeggio => 3 oscillators scheduled
+  assert.equal(registry.last._oscillators.length, before + 3);
+});
+
+test('SoundEngine: nom_nom_eat schedules 3 oscillators (3 bursts)', async () => {
+  const registry = installAudioStub();
+  const { SoundEngine } = await loadModule();
+  const s = new SoundEngine({ enabled: true });
+  s.unlock();
+  const before = registry.last._oscillators.length;
+  s.play('nom_nom_eat');
+  assert.equal(registry.last._oscillators.length, before + 3);
+});
