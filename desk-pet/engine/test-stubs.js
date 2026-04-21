@@ -102,24 +102,57 @@ export function removeAudioStub() {
   delete globalThis.webkitAudioContext;
 }
 
+// In Node 22+ globalThis.navigator is a read-only getter; use defineProperty
+// to replace it, and remember the original descriptor so we can restore it.
+function _snapshotNavigatorDescriptor() {
+  if (!('navigatorDescriptor' in _originals)) {
+    _originals.navigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator') ?? null;
+  }
+}
+
 export function installHapticStub() {
   const registry = { calls: [] };
-  _originals.navigator = globalThis.navigator;
-  globalThis.navigator = {
-    ...(globalThis.navigator ?? {}),
-    vibrate(pattern) { registry.calls.push(pattern); return true; },
-  };
+  _snapshotNavigatorDescriptor();
+  const existing = (_originals.navigatorDescriptor && 'get' in _originals.navigatorDescriptor)
+    ? _originals.navigatorDescriptor.get.call(globalThis)
+    : globalThis.navigator;
+  Object.defineProperty(globalThis, 'navigator', {
+    configurable: true,
+    writable: true,
+    enumerable: true,
+    value: {
+      ...(existing ?? {}),
+      vibrate(pattern) { registry.calls.push(pattern); return true; },
+    },
+  });
   return registry;
 }
 
 export function removeHapticStub() {
-  _originals.navigator = globalThis.navigator;
-  globalThis.navigator = { ...(globalThis.navigator ?? {}) };
-  delete globalThis.navigator.vibrate;
+  _snapshotNavigatorDescriptor();
+  const existing = (_originals.navigatorDescriptor && 'get' in _originals.navigatorDescriptor)
+    ? _originals.navigatorDescriptor.get.call(globalThis)
+    : globalThis.navigator;
+  const nav = { ...(existing ?? {}) };
+  delete nav.vibrate;
+  Object.defineProperty(globalThis, 'navigator', {
+    configurable: true,
+    writable: true,
+    enumerable: true,
+    value: nav,
+  });
 }
 
 export function uninstallHapticStub() {
-  if ('navigator' in _originals) globalThis.navigator = _originals.navigator;
+  if ('navigatorDescriptor' in _originals) {
+    const desc = _originals.navigatorDescriptor;
+    if (desc) {
+      Object.defineProperty(globalThis, 'navigator', desc);
+    } else {
+      delete globalThis.navigator;
+    }
+    delete _originals.navigatorDescriptor;
+  }
 }
 
 export function installMatchMediaStub({ reducedMotion = false } = {}) {
