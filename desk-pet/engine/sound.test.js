@@ -75,3 +75,52 @@ test('SoundEngine: setEnabled toggles enabled state', async () => {
   s.setEnabled(true);
   assert.equal(s.enabled, true);
 });
+
+test('SoundEngine: preset registry includes 6 known presets', async () => {
+  installAudioStub();
+  const { SoundEngine, PRESET_IDS } = await loadModule();
+  const expected = ['bubble_pop', 'splash_click', 'nom_nom_eat', 'forget_glub', 'chat_send', 'excited_celebration'];
+  for (const id of expected) {
+    assert.ok(PRESET_IDS.includes(id), `missing preset ${id}`);
+  }
+  assert.equal(PRESET_IDS.length, 6);
+});
+
+test('SoundEngine: play(invalid) throws with preset name', async () => {
+  installAudioStub();
+  const { SoundEngine } = await loadModule();
+  const s = new SoundEngine({ enabled: true });
+  s.unlock();
+  assert.throws(() => s.play('does_not_exist'), /Unknown sound preset: does_not_exist/);
+});
+
+test('SoundEngine: play() pre-unlock is silent no-op', async () => {
+  const registry = installAudioStub();
+  const { SoundEngine } = await loadModule();
+  const s = new SoundEngine({ enabled: true });
+  const result = s.play('bubble_pop');
+  assert.equal(result, false);
+  assert.equal(registry.count, 0);
+});
+
+test('SoundEngine: play(bubble_pop) when enabled + unlocked creates oscillator', async () => {
+  const registry = installAudioStub();
+  const { SoundEngine } = await loadModule();
+  const s = new SoundEngine({ enabled: true });
+  s.unlock();
+  const result = s.play('bubble_pop');
+  assert.equal(result, true);
+  assert.equal(registry.last._oscillators.length, 1);
+  assert.equal(registry.last._oscillators[0].started, true);
+});
+
+test('SoundEngine: play() when disabled is silent no-op', async () => {
+  const registry = installAudioStub();
+  const { SoundEngine } = await loadModule();
+  const s = new SoundEngine({ enabled: true });
+  s.unlock();
+  s.setEnabled(false);
+  const result = s.play('bubble_pop');
+  assert.equal(result, false);
+  assert.equal(registry.last._oscillators.length, 0);
+});
