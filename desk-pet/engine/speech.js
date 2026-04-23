@@ -1,3 +1,5 @@
+import { getSound } from './sound.js';
+
 /**
  * GBA-style speech bubble renderer.
  * Rendered at SCREEN resolution for readable text, but styled to match
@@ -82,9 +84,13 @@ export class SpeechBubble {
         this._timer += dt;
         if (this._timer >= this._duration) {
           this._phase = 'fadeOut';
-          if (this._onFadeOutStart && !this._fadeOutFired && this._type === 'fish') {
+          if (!this._fadeOutFired && this._type === 'fish') {
             this._fadeOutFired = true;
-            this._onFadeOutStart(this._lastBubbleRect, this._text);
+            // Audible chime accompanying the dissolve, fish-only, once per bubble.
+            getSound().play('forget_glub');
+            if (this._onFadeOutStart) {
+              this._onFadeOutStart(this._lastBubbleRect, this._text);
+            }
           }
         }
         break;

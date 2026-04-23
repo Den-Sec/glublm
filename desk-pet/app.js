@@ -217,15 +217,21 @@ function setupInput() {
     if (hitFish) {
       splash.burst(movement.x, movement.y, 10);
       if (hold > 0.5) {
+        // Long-press fish -> HAPPY. Haptic only (audio would feel intrusive).
+        haptic.pulse('long_press_happy');
         fsm.transition(STATES.HAPPY, { duration: 2.5, priority: 3 });
       } else {
         clickCount++;
         if (clickTimer) clearTimeout(clickTimer);
         clickTimer = setTimeout(() => {
           if (clickCount >= 2) {
+            // Double-click fish -> EXCITED. Haptic here; audio fires via FSM listener.
+            haptic.pulse('double_excited');
             fsm.transition(STATES.EXCITED, { duration: 1.5, priority: 3 });
             splash.burst(movement.x, movement.y, 14);
           } else {
+            // Single-click fish -> spiral swim. Haptic only by spec.
+            haptic.pulse('tap_fish');
             startSpiral();
             fsm.transition(STATES.WIGGLING, { duration: SPIRAL_DURATION + 0.2, priority: 3 });
           }
@@ -233,14 +239,24 @@ function setupInput() {
         }, 250);
       }
     } else if (bowl.isInSwimBounds(pos.x, pos.y)) {
+      // Click on water -> splash. Haptic + audio.
+      haptic.pulse('splash_click');
+      sound.play('splash_click');
       splash.burst(pos.x, pos.y, 6);
     }
   });
 
   el.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  // Chat input
-  const form = (e) => { e.preventDefault?.(); handleChat(promptEl.value); };
+  // Chat input - haptic + audio on submit (only when there's non-empty text).
+  const form = (e) => {
+    e.preventDefault?.();
+    if (promptEl.value.trim()) {
+      haptic.pulse('chat_send');
+      sound.play('chat_send');
+    }
+    handleChat(promptEl.value);
+  };
   sendEl.addEventListener('click', form);
   promptEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') form(e); });
 }
@@ -625,6 +641,14 @@ async function init() {
     if (rect) {
       dissolve.burst(rect.cx, rect.cy, rect.w, rect.h, 18);
     }
+  });
+
+  // State-driven audio: EAT + EXCITED transitions fire their audio presets.
+  // Covers both user-initiated (double-click -> EXCITED, sleep-wake tap) and
+  // engine-initiated (random EATING event) paths without duplicating calls.
+  fsm.onStateChange((newState) => {
+    if (newState === STATES.EATING) sound.play('nom_nom_eat');
+    if (newState === STATES.EXCITED) sound.play('excited_celebration');
   });
 
   // Feature-availability flags for CSS (hide audio/haptic rows if unsupported).

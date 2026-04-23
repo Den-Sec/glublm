@@ -1,3 +1,5 @@
+import { getSound } from './sound.js';
+
 /**
  * Pixel-art bubble particle system.
  * Bubbles are 1-2 pixel circles that rise through the water.
@@ -46,6 +48,8 @@ export class BubbleSystem {
       opacity: 0.3 + Math.random() * 0.4,
       life: 0,
     });
+    // Audible bubble pop - throttled internally by SoundEngine (500ms min gap).
+    getSound().play('bubble_pop');
   }
 
   /** @param {CanvasRenderingContext2D} ctx */
