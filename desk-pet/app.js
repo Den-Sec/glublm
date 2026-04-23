@@ -17,7 +17,14 @@ import { SpeechBubble } from './engine/speech.js';
 const speechDuration = (text) => SpeechBubble.calcDuration(text);
 import { IdleScheduler } from './engine/idle.js';
 import { OnnxModel } from './inference/model.js';
-import { shouldShowOnboarding, runOnboarding } from './engine/onboarding.js';
+import {
+  runOnboarding,
+  showTutorial,
+  shouldShowOnboarding,
+  setDeps as setOnboardingDeps,
+} from './engine/onboarding.js';
+import { getSound } from './engine/sound.js';
+import { getHaptic } from './engine/haptic.js';
 
 // ============================================================
 // Systems
@@ -67,7 +74,15 @@ const SETTINGS = {
   installDismissed: localStorage.getItem('glub_install_dismissed') === '1',
   installed: localStorage.getItem('glub_installed') === '1',
   installShowCount: parseInt(localStorage.getItem('glub_install_show_count') || '0'),
+  // Default ON for both; only '0' explicitly disables (new user keys absent -> enabled).
+  audioEnabled: localStorage.getItem('glub_audio_enabled') !== '0',
+  hapticEnabled: localStorage.getItem('glub_haptic_enabled') !== '0',
 };
+
+// Sound + haptic singletons. Created at module load - no DOM touched here.
+// body.dataset flags for feature availability are set inside init() once DOM is ready.
+const sound = getSound({ enabled: SETTINGS.audioEnabled });
+const haptic = getHaptic({ enabled: SETTINGS.hapticEnabled });
 
 // Set to true if model load fails - gates install banner + keeps loading overlay visible.
 let modelLoadFailed = false;
@@ -297,6 +312,38 @@ function setupSettings() {
     SETTINGS.fishName = fishNameEl.value.trim();
     localStorage.setItem('glub_fish_name', SETTINGS.fishName);
   });
+
+  // Audio / haptic toggles (checkboxes added in Task 10 HTML).
+  const audioCb = document.getElementById('audio-enabled');
+  if (audioCb) {
+    audioCb.checked = SETTINGS.audioEnabled;
+    audioCb.addEventListener('change', (e) => {
+      SETTINGS.audioEnabled = e.target.checked;
+      localStorage.setItem('glub_audio_enabled', e.target.checked ? '1' : '0');
+      sound.setEnabled(e.target.checked);
+    });
+  }
+
+  const hapticCb = document.getElementById('haptic-enabled');
+  if (hapticCb) {
+    hapticCb.checked = SETTINGS.hapticEnabled;
+    hapticCb.addEventListener('change', (e) => {
+      SETTINGS.hapticEnabled = e.target.checked;
+      localStorage.setItem('glub_haptic_enabled', e.target.checked ? '1' : '0');
+      haptic.setEnabled(e.target.checked);
+    });
+  }
+
+  // Replay tutorial - close settings panel first, then force-run onboarding.
+  const replayBtn = document.getElementById('replay-tutorial');
+  if (replayBtn) {
+    replayBtn.addEventListener('click', () => {
+      // settings-panel is a <div>, not a <dialog>; close via hidden class (same
+      // path as closeSettings() above) but without saving (nothing to save).
+      settingsPanel.classList.add('hidden');
+      showTutorial({ force: true }).catch((err) => console.warn('tutorial replay failed:', err));
+    });
+  }
 }
 
 function saveSettings() {
@@ -578,6 +625,43 @@ async function init() {
     if (rect) {
       dissolve.burst(rect.cx, rect.cy, rect.w, rect.h, 18);
     }
+  });
+
+  // Feature-availability flags for CSS (hide audio/haptic rows if unsupported).
+  if (!sound.hasAudio) document.body.dataset.noAudio = '1';
+  if (!haptic.hasHaptic) document.body.dataset.noHaptic = '1';
+
+  // First-gesture unlock: AudioContext must be resumed inside a user gesture.
+  // Capture + once so we catch the earliest possible pointerdown anywhere.
+  document.addEventListener(
+    'pointerdown',
+    () => { sound.unlock(); },
+    { once: true, capture: true },
+  );
+
+  // Wire onboarding dependencies before any runOnboarding call fires.
+  // getFishRect returns screen-space rect around the fish (40x40 centered on movement),
+  // converting internal canvas coords to screen via CanvasManager's scale helper.
+  setOnboardingDeps({
+    haptic,
+    sound,
+    speech,
+    fsm,
+    STATES,
+    getFishRect: () => {
+      const canvasEl = canvas.el;
+      const crect = canvasEl.getBoundingClientRect();
+      // movement.x/y are in internal (pixel-buffer) coords; convert to screen.
+      const fx = (typeof movement?.x === 'number') ? movement.x : canvas.width / 2;
+      const fy = (typeof movement?.y === 'number') ? movement.y : canvas.height / 2;
+      const screen = canvas.internalToScreen(fx, fy);
+      return {
+        left: crect.left + screen.x - 20,
+        top: crect.top + screen.y - 20,
+        width: 40,
+        height: 40,
+      };
+    },
   });
 
   setupInput();
