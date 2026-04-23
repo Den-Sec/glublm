@@ -128,9 +128,19 @@
   </main>
 
   <script>
-    (async () => {
+    // Probe companion server so the aquarium/controller links in the cross-nav
+    // can upgrade from the github fallback to the live localhost URL when a
+    // companion is running. 2.5s timeout tolerates tab cold-start jitter; the
+    // probe is deferred to page 'load' so we don't race the network stack
+    // during DOM parse, and cache:'no-store' avoids Chrome's negative-cache
+    // keeping a stale ERR_CONNECTION_REFUSED from a previous attempt.
+    window.addEventListener('load', async () => {
       try {
-        const r = await fetch('http://localhost:3210/health', { signal: AbortSignal.timeout(500), mode: 'cors' });
+        const r = await fetch('http://localhost:3210/health', {
+          signal: AbortSignal.timeout(2500),
+          mode: 'cors',
+          cache: 'no-store',
+        });
         if (!r.ok) return;
         document.querySelectorAll('.cross-nav [data-surface]').forEach(a => {
           a.href = `http://localhost:3210/${a.dataset.surface}/`;
@@ -138,7 +148,7 @@
           a.removeAttribute('title');
         });
       } catch (e) { /* companion not running - github fallback remains */ }
-    })();
+    });
   </script>
 
   <script type="module" src="app.js"></script>
