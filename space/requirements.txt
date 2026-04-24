@@ -3,4 +3,4 @@ gradio>=5.0,<6.0
 torch>=2.3
 huggingface-hub>=0.25
 safetensors>=0.4
-tokenizers>=0.19
+tokenizers>=0.22.2
