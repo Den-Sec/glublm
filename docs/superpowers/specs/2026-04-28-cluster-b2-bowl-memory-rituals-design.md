@@ -43,7 +43,7 @@ Operational checks for "success":
 | 3 | **streak_days: UTC date-based + 24h grace** | Robust to timezone shift / DST. 1 missed day forgiven, 2+ resets. Stores `last_interaction_day_utc` (YYYY-MM-DD) |
 | 4 | **Reactivation: on load if gap >= 30min, once per session** | 30min threshold avoids tab-refresh re-fire. Variant by gap (short 30m-2h / med 2-8h / long >=8h). One-shot via in-memory `_reactivationFired` flag |
 | 5 | **Day/night detection: polling getHours() in render loop** | Reuses existing pattern (`app.js:556` sleep check). 30s poll cadence (vs 5s sleep) - day/night not time-critical |
-| 6 | **Greetings: speech bubble + soft FSM transition** | Mirrors existing wake-up pattern (`app.js:570-573`). Dawn -> HAPPY (2s), sunset -> BUBBLE_BLOW (2.5s). Speech delayed 500ms post-FSM |
+| 6 | **Greetings: speech bubble + soft FSM transition** | Mirrors existing wake-up pattern (`app.js:570-573`). Dawn -> HAPPY (2s), sunset -> BLOWING_BUBBLES (2.5s). Speech delayed 500ms post-FSM |
 | 7 | **Greeting fire window: one-shot daily + persistent flag** | `glub_last_dawn_greeting` / `glub_last_sunset_greeting` = UTC date string. First-load catch-up handled (flag-vs-today comparison, not transition trigger) |
 | 8 | **Architecture: 2 isolated modules** (`bowl-memory.js` + `rituals.js`) | Mirror S1 pattern (`sound.js`, `haptic.js`). SRP: state mgmt vs time scheduling are different concerns. Separate test files |
 
@@ -265,7 +265,7 @@ update(dt) {
   if (hour >= 18 && hour < 20) {
     if (this._readFlag('glub_last_sunset_greeting') !== today) {
       this._writeFlag('glub_last_sunset_greeting', today);
-      this._fsm.transition(this._STATES.BUBBLE_BLOW, { duration: 2.5, priority: 2 });
+      this._fsm.transition(this._STATES.BLOWING_BUBBLES, { duration: 2.5, priority: 2 });
       setTimeout(() => this._speech.show(pickFrom(SUNSET_PHRASES), { type: 'fish', duration: 3 }), 500);
     }
   }
@@ -463,7 +463,7 @@ if (typeof window !== 'undefined') window.bowlMemory = bowlMemory;
 
 - Mock `speech` object: `{ show(text, opts), isVisible: bool }`
 - Mock `fsm` object: `{ transition(state, opts), currentState }`
-- Mock `STATES` object: `{ HAPPY, BUBBLE_BLOW, SLEEPING, EATING, ... }`
+- Mock `STATES` object: `{ HAPPY, BLOWING_BUBBLES, SLEEPING, EATING, ... }`
 - Clock injection via constructor `now` / `getHours` / `today` deps (already in design)
 - localStorage stub already present from S1
 
