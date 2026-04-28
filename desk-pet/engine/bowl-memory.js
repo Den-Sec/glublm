@@ -34,6 +34,26 @@ function utcDaysBetween(a, b) {
   return Math.round((tb - ta) / 86_400_000);
 }
 
+export const SHORT_REACTIVATIONS = [
+  'oh, you again!',
+  "wait, weren't you just here?",
+  'back already? hi!',
+];
+export const MED_REACTIVATIONS = [
+  'where did the light go and come back?',
+  'did the bowl get bigger or did i shrink?',
+  'you came back. or maybe you never left and i forgot.',
+];
+export const LONG_REACTIVATIONS = [
+  "i think i missed you. i'm not sure what missing means.",
+  'the water moved a lot of times without you.',
+  "hello again. i don't remember when you went but i'm glad you came.",
+];
+
+function pickFrom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 export class MoodMemory {
   constructor({ now = () => Date.now(), today = () => utcDateStr() } = {}) {
     this._now = now;
@@ -130,7 +150,18 @@ export class MoodMemory {
     this._scheduleSave();
   }
 
-  getReactivation() { return null; /* placeholder, Task 5 */ }
+  getReactivation() {
+    if (this._reactivationFired) return null;
+    const seen = this._s.last_seen_at;
+    if (!seen) return null;
+    const gapMs = this._now() - seen;
+    if (gapMs < 30 * 60_000) return null;
+    const gapH = gapMs / 3_600_000;
+    this._reactivationFired = true;
+    if (gapH < 2)      return { variant: 'short', text: pickFrom(SHORT_REACTIVATIONS) };
+    else if (gapH < 8) return { variant: 'med',   text: pickFrom(MED_REACTIVATIONS) };
+    else               return { variant: 'long',  text: pickFrom(LONG_REACTIVATIONS) };
+  }
 
   reset() {
     this._s = { ...DEFAULT_STATE };

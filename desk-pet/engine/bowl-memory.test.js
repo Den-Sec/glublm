@@ -190,3 +190,71 @@ test('bowl-memory: recordEvent unknown type throws', async () => {
   m.load();
   assert.throws(() => m.recordEvent('bogus'), /Unknown event type/);
 });
+
+test('bowl-memory: getReactivation returns null when last_seen_at == 0', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  const m = new MoodMemory();
+  m.load();
+  assert.equal(m.getReactivation(), null);
+});
+
+test('bowl-memory: getReactivation null when gap < 30min', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  const NOW = 1_000_000_000;
+  const m = new MoodMemory({ now: () => NOW });
+  m.load();
+  m._s.last_seen_at = NOW - 10 * 60_000;     // 10min gap
+  assert.equal(m.getReactivation(), null);
+});
+
+test('bowl-memory: getReactivation 1h gap -> short variant', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory, SHORT_REACTIVATIONS } = await loadModule();
+  const NOW = 1_000_000_000;
+  const m = new MoodMemory({ now: () => NOW });
+  m.load();
+  m._s.last_seen_at = NOW - 60 * 60_000;     // 60min gap
+  const r = m.getReactivation();
+  assert.equal(r.variant, 'short');
+  assert.ok(SHORT_REACTIVATIONS.includes(r.text));
+});
+
+test('bowl-memory: getReactivation 4h gap -> med variant', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory, MED_REACTIVATIONS } = await loadModule();
+  const NOW = 1_000_000_000;
+  const m = new MoodMemory({ now: () => NOW });
+  m.load();
+  m._s.last_seen_at = NOW - 4 * 3_600_000;
+  const r = m.getReactivation();
+  assert.equal(r.variant, 'med');
+  assert.ok(MED_REACTIVATIONS.includes(r.text));
+});
+
+test('bowl-memory: getReactivation 12h gap -> long variant', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory, LONG_REACTIVATIONS } = await loadModule();
+  const NOW = 1_000_000_000;
+  const m = new MoodMemory({ now: () => NOW });
+  m.load();
+  m._s.last_seen_at = NOW - 12 * 3_600_000;
+  const r = m.getReactivation();
+  assert.equal(r.variant, 'long');
+  assert.ok(LONG_REACTIVATIONS.includes(r.text));
+});
+
+test('bowl-memory: getReactivation second call same instance -> null (one-shot)', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  const NOW = 1_000_000_000;
+  const m = new MoodMemory({ now: () => NOW });
+  m.load();
+  m._s.last_seen_at = NOW - 60 * 60_000;
+  const r1 = m.getReactivation();
+  assert.ok(r1);
+  const r2 = m.getReactivation();
+  assert.equal(r2, null);
+  assert.equal(m.isReactivationFired, true);
+});
