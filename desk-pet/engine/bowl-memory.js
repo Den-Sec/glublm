@@ -105,7 +105,30 @@ export class MoodMemory {
     return 0;
   }
 
-  recordEvent(_type) { /* placeholder, Task 4 */ }
+  recordEvent(type) {
+    if (type !== 'chat' && type !== 'feed' && type !== 'excited') {
+      throw new Error(`Unknown event type: ${type}`);
+    }
+    const now = this._now();
+    const today = this._today();
+    const last = this._s.last_interaction_day_utc;
+
+    if (!last) {
+      this._s.streak_days = 1;
+    } else if (last !== today) {
+      const gapDays = utcDaysBetween(last, today);
+      if (gapDays >= 1 && gapDays <= 2) this._s.streak_days += 1;
+      else if (gapDays > 2)             this._s.streak_days = 1;
+      // gapDays < 1 (clock skew backwards) -> leave streak unchanged
+    }
+    this._s.last_interaction_day_utc = today;
+
+    if (type === 'chat')    { this._s.last_chat_at    = now; this._s.total_chats   += 1; }
+    if (type === 'feed')    { this._s.last_feed_at    = now; this._s.total_feeds   += 1; }
+    if (type === 'excited') { this._s.last_excited_at = now; this._s.total_excited += 1; }
+
+    this._scheduleSave();
+  }
 
   getReactivation() { return null; /* placeholder, Task 5 */ }
 

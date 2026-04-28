@@ -109,3 +109,84 @@ test('bowl-memory: mood_score uses most recent of feed/chat/excited', async () =
   m._s.last_excited_at = 0;
   assert.equal(m.getMoodScore(), 3);
 });
+
+test('bowl-memory: recordEvent("chat") updates last_chat_at + total_chats + day', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  const m = new MoodMemory({ now: () => 5000, today: () => '2026-04-28' });
+  m.load();
+  m.recordEvent('chat');
+  assert.equal(m.state.last_chat_at, 5000);
+  assert.equal(m.state.total_chats, 1);
+  assert.equal(m.state.last_feed_at, 0);
+  assert.equal(m.state.streak_days, 1);
+  assert.equal(m.state.last_interaction_day_utc, '2026-04-28');
+});
+
+test('bowl-memory: recordEvent("feed") increments total_feeds only', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  const m = new MoodMemory({ today: () => '2026-04-28' });
+  m.load();
+  m.recordEvent('feed');
+  m.recordEvent('feed');
+  assert.equal(m.state.total_feeds, 2);
+  assert.equal(m.state.total_chats, 0);
+  assert.equal(m.state.total_excited, 0);
+});
+
+test('bowl-memory: streak same UTC day -> no increment', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  const m = new MoodMemory({ today: () => '2026-04-28' });
+  m.load();
+  m.recordEvent('chat');
+  m.recordEvent('chat');
+  m.recordEvent('feed');
+  assert.equal(m.state.streak_days, 1);
+});
+
+test('bowl-memory: streak gap 1 UTC day -> +1', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  let day = '2026-04-26';
+  const m = new MoodMemory({ today: () => day });
+  m.load();
+  m.recordEvent('chat');                        // streak=1
+  day = '2026-04-27';
+  m.recordEvent('chat');                        // streak=2 (gap=1)
+  assert.equal(m.state.streak_days, 2);
+});
+
+test('bowl-memory: streak gap 2 UTC days -> +1 (24h grace)', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  let day = '2026-04-26';
+  const m = new MoodMemory({ today: () => day });
+  m.load();
+  m.recordEvent('chat');                        // streak=1
+  day = '2026-04-28';
+  m.recordEvent('chat');                        // streak=2 (gap=2, grace)
+  assert.equal(m.state.streak_days, 2);
+});
+
+test('bowl-memory: streak gap 3+ UTC days -> reset to 1', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  let day = '2026-04-26';
+  const m = new MoodMemory({ today: () => day });
+  m.load();
+  m.recordEvent('chat');                        // streak=1
+  m._s.streak_days = 7;                          // simulate accumulated streak
+  day = '2026-04-30';
+  m.recordEvent('chat');                        // gap=4 -> reset
+  assert.equal(m.state.streak_days, 1);
+});
+
+test('bowl-memory: recordEvent unknown type throws', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  const m = new MoodMemory();
+  m.load();
+  assert.throws(() => m.recordEvent('bogus'), /Unknown event type/);
+});
