@@ -195,6 +195,43 @@ export function uninstallLocalStorageStub() {
   if ('localStorage' in _originals) globalThis.localStorage = _originals.localStorage;
 }
 
+// --- Speech / FSM / STATES mocks for bowl-memory + rituals tests ---
+
+export function makeSpeechMock() {
+  const calls = [];
+  return {
+    isVisible: false,
+    show(text, opts) { calls.push({ text, opts }); this.isVisible = true; },
+    _calls: calls,
+  };
+}
+
+export function makeFsmMock(initialState = 'IDLE') {
+  const calls = [];
+  let state = initialState;
+  return {
+    get currentState() { return state; },
+    setState(s) { state = s; },
+    transition(s, opts) { calls.push({ state: s, opts }); state = s; return true; },
+    _calls: calls,
+  };
+}
+
+export const STATES_MOCK = Object.freeze({
+  IDLE: 'IDLE',
+  SLEEPING: 'SLEEPING',
+  EATING: 'EATING',
+  HAPPY: 'HAPPY',
+  EXCITED: 'EXCITED',
+  BLOWING_BUBBLES: 'BLOWING_BUBBLES',
+  TALKING: 'TALKING',
+  FORGETTING: 'FORGETTING',
+  BUMPING: 'BUMPING',
+  TURNING: 'TURNING',
+  WIGGLING: 'WIGGLING',
+  SAD: 'SAD',
+});
+
 export function resetAllStubs() {
   uninstallAudioStub();
   uninstallHapticStub();
