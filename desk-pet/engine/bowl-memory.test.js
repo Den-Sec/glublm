@@ -258,3 +258,33 @@ test('bowl-memory: getReactivation second call same instance -> null (one-shot)'
   assert.equal(r2, null);
   assert.equal(m.isReactivationFired, true);
 });
+
+test('bowl-memory: rapid recordEvent debounces to single save after 500ms', async (t) => {
+  const ls = installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  const m = new MoodMemory({ today: () => '2026-04-28' });
+  m.load();
+  // Allow the implicit save from Task 2 (load no-key -> writes nothing) to settle
+  ls.glub_bowl_memory = ''; // clear what load might have written
+  m.recordEvent('chat');
+  m.recordEvent('chat');
+  m.recordEvent('feed');
+  // Before debounce window, file is still empty (no write yet)
+  assert.equal(ls.glub_bowl_memory ?? '', '');
+  await new Promise(r => setTimeout(r, 600));
+  const persisted = JSON.parse(ls.glub_bowl_memory);
+  assert.equal(persisted.total_chats, 2);
+  assert.equal(persisted.total_feeds, 1);
+});
+
+test('bowl-memory: save({flush:true}) bypasses debounce', async () => {
+  const ls = installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  const m = new MoodMemory({ today: () => '2026-04-28' });
+  m.load();
+  ls.glub_bowl_memory = '';
+  m.recordEvent('chat');
+  m.save({ flush: true });
+  const persisted = JSON.parse(ls.glub_bowl_memory);
+  assert.equal(persisted.total_chats, 1);
+});
