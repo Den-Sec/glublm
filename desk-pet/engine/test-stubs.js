@@ -197,6 +197,8 @@ export function uninstallLocalStorageStub() {
 
 // --- Speech / FSM / STATES mocks for bowl-memory + rituals tests ---
 
+// These factories are pure (no globals); call per-test for fresh state,
+// no install/uninstall needed in resetAllStubs().
 export function makeSpeechMock() {
   const calls = [];
   return {
@@ -206,30 +208,33 @@ export function makeSpeechMock() {
   };
 }
 
-export function makeFsmMock(initialState = 'IDLE') {
+export function makeFsmMock(initialState = 'idle_swim') {
   const calls = [];
   let state = initialState;
   return {
     get currentState() { return state; },
+    // setState is a test-helper to seed initial conditions without polluting
+    // _calls; transition() represents production calls that ARE under test.
     setState(s) { state = s; },
     transition(s, opts) { calls.push({ state: s, opts }); state = s; return true; },
     _calls: calls,
   };
 }
 
+// Mirror real STATES enum from state-machine.js so tests use faithful values.
 export const STATES_MOCK = Object.freeze({
-  IDLE: 'IDLE',
-  SLEEPING: 'SLEEPING',
-  EATING: 'EATING',
-  HAPPY: 'HAPPY',
-  EXCITED: 'EXCITED',
-  BLOWING_BUBBLES: 'BLOWING_BUBBLES',
-  TALKING: 'TALKING',
-  FORGETTING: 'FORGETTING',
-  BUMPING: 'BUMPING',
-  TURNING: 'TURNING',
-  WIGGLING: 'WIGGLING',
-  SAD: 'SAD',
+  IDLE: 'idle_swim',
+  SLEEPING: 'sleep',
+  EATING: 'eat',
+  HAPPY: 'happy',
+  EXCITED: 'excited',
+  BLOWING_BUBBLES: 'bubble_blow',
+  TALKING: 'talk',
+  FORGETTING: 'forget',
+  BUMPING: 'bump_glass',
+  TURNING: 'turn_around',
+  WIGGLING: 'wiggle',
+  SAD: 'sad',
 });
 
 export function resetAllStubs() {
