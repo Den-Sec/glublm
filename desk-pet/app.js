@@ -25,6 +25,8 @@ import {
 } from './engine/onboarding.js';
 import { getSound } from './engine/sound.js';
 import { getHaptic } from './engine/haptic.js';
+import { bowlMemory } from './engine/bowl-memory.js';
+import { rituals } from './engine/rituals.js';
 
 // ============================================================
 // Systems
@@ -500,6 +502,7 @@ function render(dt) {
   splash.update(dt);
   speech.update(dt);
   dissolve.update(dt);
+  rituals.update(dt);
 
   // Spiral override
   if (spiralActive) {
@@ -635,6 +638,32 @@ async function init() {
   dissolve = new DissolveSystem();
   idle = new IdleScheduler(speech, fsm);
   model = new OnnxModel();
+
+  // Bowl memory + rituals (Cluster B.2)
+  bowlMemory.load();
+  bowlMemory.recordSeen();
+  rituals.setDeps({ speech, fsm, STATES });
+  idle.setMoodProvider(() => bowlMemory.getMoodScore());
+  idle.setHourProvider(() => new Date().getHours());
+
+  // Reactivation phrase post-onboarding (delay 2.5s to let onboarding settle)
+  const reactivation = bowlMemory.getReactivation();
+  if (reactivation) {
+    setTimeout(() => {
+      if (!speech.isVisible) {
+        speech.show(reactivation.text, { type: 'fish', duration: 4 });
+      }
+    }, 2500);
+  }
+
+  // Dev console handle (no UI surface yet)
+  if (typeof window !== 'undefined') window.bowlMemory = bowlMemory;
+
+  // Bowl memory: record visibility returns + flush save on page hide
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) bowlMemory.recordSeen();
+  });
+  window.addEventListener('pagehide', () => bowlMemory.save({ flush: true }));
 
   // When a fish bubble fades out, burst dissolve particles from its rect
   speech.onFadeOutStart((rect) => {
