@@ -7,7 +7,7 @@
 
 // Bump on any release. The model cache is versioned separately so we
 // don't force a 40 MB re-download on every code update.
-const CACHE_VERSION = 'glub-v7';
+const CACHE_VERSION = 'glub-v8';
 const CACHE_MODEL = 'glub-model-v3';
 
 const STATIC_ASSETS = [
@@ -28,6 +28,8 @@ const STATIC_ASSETS = [
   './engine/onboarding.js',
   './engine/sound.js',
   './engine/haptic.js',
+  './engine/bowl-memory.js',
+  './engine/rituals.js',
   './inference/model.js',
   './inference/tokenizer.js',
   './data/idle-phrases.json',
