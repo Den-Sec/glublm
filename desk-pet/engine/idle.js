@@ -43,6 +43,8 @@ export class IdleScheduler {
     this._lastChatTime = 0;
     this._silenceTime = 0;
     this._enabled = true;
+    this._getMood = null;
+    this._getHour = null;
   }
 
   /** Load full phrase pool from JSON (Phase 2). */
@@ -83,6 +85,12 @@ export class IdleScheduler {
   /** Enable/disable idle phrases. */
   setEnabled(v) { this._enabled = v; }
 
+  /** Inject mood provider () => 0..3 (joyful=3, neglected=0). */
+  setMoodProvider(fn) { this._getMood = fn; }
+
+  /** Inject hour-of-day provider () => 0..23 (local hour). */
+  setHourProvider(fn) { this._getHour = fn; }
+
   update(dt) {
     if (!this._enabled) return null;
 
@@ -107,19 +115,38 @@ export class IdleScheduler {
   }
 
   _selectPhrase() {
-    // Filter out recently shown
-    const candidates = this._phrases.filter(p =>
-      !this._recentlyShown.includes(p.text)
-    );
-    if (candidates.length === 0) {
+    const candidates = this._phrases.filter(p => !this._recentlyShown.includes(p.text));
+    let pool;
+    if (candidates.length > 0) {
+      pool = candidates;
+    } else {
       this._recentlyShown = [];
-      return this._phrases[Math.floor(Math.random() * this._phrases.length)];
+      pool = this._phrases;
     }
 
-    // Weighted random
-    const pick = candidates[Math.floor(Math.random() * candidates.length)];
+    const mood = this._getMood ? this._getMood() : 2;
+    const hour = this._getHour ? this._getHour() : 12;
+    const moodCat = mood === 3 ? 'cheerful' : mood === 0 ? 'existential' : null;
+    const hourCat = hour >= 6 && hour < 12 ? 'morning'
+                  : hour >= 18 && hour < 22 ? 'evening' : null;
 
-    // Track recent
+    const weighted = pool.map(p => {
+      const baseW = p.weight ?? 1;
+      const moodMul = (moodCat && p.category === moodCat) ? 2.0 : 1.0;
+      const hourMul = (hourCat && p.category === hourCat) ? 1.5 : 1.0;
+      return { p, w: baseW * moodMul * hourMul };
+    });
+
+    const totalW = weighted.reduce((s, x) => s + x.w, 0);
+    if (totalW <= 0) return pool[0];
+
+    let r = Math.random() * totalW;
+    let pick = weighted[weighted.length - 1].p;
+    for (const { p, w } of weighted) {
+      r -= w;
+      if (r <= 0) { pick = p; break; }
+    }
+
     this._recentlyShown.push(pick.text);
     if (this._recentlyShown.length > 15) this._recentlyShown.shift();
 
