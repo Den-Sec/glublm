@@ -118,6 +118,7 @@ async function handleChat(text) {
   if (chatBusy || !text.trim()) return;
   if (modelLoadFailed || !model.isReady) return;
   chatBusy = true;
+  bowlMemory.recordEvent('chat');
   promptEl.disabled = true;
   sendEl.disabled = true;
   promptEl.placeholder = 'thinking...';
@@ -229,6 +230,7 @@ function setupInput() {
           if (clickCount >= 2) {
             // Double-click fish -> EXCITED. Haptic here; audio fires via FSM listener.
             haptic.pulse('double_excited');
+            bowlMemory.recordEvent('excited');
             fsm.transition(STATES.EXCITED, { duration: 1.5, priority: 3 });
             splash.burst(movement.x, movement.y, 14);
           } else {
@@ -676,7 +678,10 @@ async function init() {
   // Covers both user-initiated (double-click -> EXCITED, sleep-wake tap) and
   // engine-initiated (random EATING event) paths without duplicating calls.
   fsm.onStateChange((newState) => {
-    if (newState === STATES.EATING) sound.play('nom_nom_eat');
+    if (newState === STATES.EATING) {
+      sound.play('nom_nom_eat');
+      bowlMemory.recordEvent('feed');
+    }
     if (newState === STATES.EXCITED) sound.play('excited_celebration');
   });
 
