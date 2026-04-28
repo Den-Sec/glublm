@@ -62,7 +62,14 @@ export class RitualScheduler {
     const hour = this._getHours();
     const today = this._today();
 
-    // Dawn / sunset logic added in Tasks 8 + 9
+    if (hour >= 6 && hour < 7) {
+      if (this._readFlag(FLAG_DAWN) !== today) {
+        this._writeFlag(FLAG_DAWN, today);
+        this._fsm.transition(this._STATES.HAPPY, { duration: 2, priority: 3 });
+        const phrase = pickFrom(DAWN_PHRASES);
+        setTimeout(() => this._speech.show(phrase, { type: 'fish', duration: 3 }), 500);
+      }
+    }
   }
 
   reset() {
