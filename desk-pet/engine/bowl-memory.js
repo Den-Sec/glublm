@@ -91,7 +91,19 @@ export class MoodMemory {
 
   get state() { return { ...this._s, mood_score: this.getMoodScore() }; }
 
-  getMoodScore() { return 0; /* placeholder, Task 3 */ }
+  getMoodScore() {
+    const mostRecent = Math.max(
+      this._s.last_chat_at || 0,
+      this._s.last_feed_at || 0,
+      this._s.last_excited_at || 0,
+    );
+    if (mostRecent === 0) return 0;
+    const ageH = (this._now() - mostRecent) / 3_600_000;
+    if (ageH < 2)  return 3;
+    if (ageH < 8)  return 2;
+    if (ageH < 24) return 1;
+    return 0;
+  }
 
   recordEvent(_type) { /* placeholder, Task 4 */ }
 

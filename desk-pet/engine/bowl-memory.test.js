@@ -73,3 +73,39 @@ test('bowl-memory: recordSeen updates last_seen_at', async () => {
   m.recordSeen();
   assert.equal(m.state.last_seen_at, 12345);
 });
+
+test('bowl-memory: mood_score = 0 when never interacted', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  const m = new MoodMemory({ now: () => 1_000_000 });
+  m.load();
+  assert.equal(m.getMoodScore(), 0);
+});
+
+test('bowl-memory: mood_score 3=joyful <2h, 2=ok <8h, 1=lonely <24h, 0=neglected >=24h', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  const NOW = 1_000_000_000;
+  let now = NOW;
+  const m = new MoodMemory({ now: () => now });
+  m.load();
+
+  // Inject last_chat_at via direct state for testing pure mood logic
+  m._s.last_chat_at = NOW;
+  now = NOW + 1 * 3_600_000;       assert.equal(m.getMoodScore(), 3, '1h -> joyful');
+  now = NOW + 3 * 3_600_000;       assert.equal(m.getMoodScore(), 2, '3h -> ok');
+  now = NOW + 12 * 3_600_000;      assert.equal(m.getMoodScore(), 1, '12h -> lonely');
+  now = NOW + 30 * 3_600_000;      assert.equal(m.getMoodScore(), 0, '30h -> neglected');
+});
+
+test('bowl-memory: mood_score uses most recent of feed/chat/excited', async () => {
+  installLocalStorageStub({});
+  const { MoodMemory } = await loadModule();
+  const NOW = 1_000_000_000;
+  const m = new MoodMemory({ now: () => NOW + 60 * 60_000 }); // 1h after NOW
+  m.load();
+  m._s.last_chat_at = NOW - 100 * 3_600_000;     // 100h ago (very old)
+  m._s.last_feed_at = NOW;                       // 1h ago (joyful range)
+  m._s.last_excited_at = 0;
+  assert.equal(m.getMoodScore(), 3);
+});
