@@ -90,3 +90,30 @@ test('rituals: dawn skipped if speech.isVisible', async () => {
   r.update(31);
   assert.equal(fsm._calls.length, 0);
 });
+
+test('rituals: sunset fires at hour=18 when flag != today', async () => {
+  installLocalStorageStub({});
+  const { RitualScheduler, SUNSET_PHRASES } = await loadModule();
+  const speech = makeSpeechMock();
+  const fsm = makeFsmMock(STATES_MOCK.IDLE);
+  const r = new RitualScheduler({ getHours: () => 18, today: () => '2026-04-28' });
+  r.setDeps({ speech, fsm, STATES: STATES_MOCK });
+  r.update(31);
+  assert.equal(fsm._calls.length, 1);
+  assert.equal(fsm._calls[0].state, STATES_MOCK.BLOWING_BUBBLES);
+  await new Promise(r => setTimeout(r, 600));
+  assert.equal(speech._calls.length, 1);
+  assert.ok(SUNSET_PHRASES.includes(speech._calls[0].text));
+  assert.equal(globalThis.localStorage.getItem('glub_last_sunset_greeting'), '2026-04-28');
+});
+
+test('rituals: skip both at hour=21', async () => {
+  installLocalStorageStub({});
+  const { RitualScheduler } = await loadModule();
+  const speech = makeSpeechMock();
+  const fsm = makeFsmMock(STATES_MOCK.IDLE);
+  const r = new RitualScheduler({ getHours: () => 21, today: () => '2026-04-28' });
+  r.setDeps({ speech, fsm, STATES: STATES_MOCK });
+  r.update(31);
+  assert.equal(fsm._calls.length, 0);
+});

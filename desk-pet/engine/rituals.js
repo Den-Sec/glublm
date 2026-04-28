@@ -70,6 +70,15 @@ export class RitualScheduler {
         setTimeout(() => this._speech.show(phrase, { type: 'fish', duration: 3 }), 500);
       }
     }
+
+    if (hour >= 18 && hour < 20) {
+      if (this._readFlag(FLAG_SUNSET) !== today) {
+        this._writeFlag(FLAG_SUNSET, today);
+        this._fsm.transition(this._STATES.BLOWING_BUBBLES, { duration: 2.5, priority: 2 });
+        const phrase = pickFrom(SUNSET_PHRASES);
+        setTimeout(() => this._speech.show(phrase, { type: 'fish', duration: 3 }), 500);
+      }
+    }
   }
 
   reset() {
