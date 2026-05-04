@@ -10,6 +10,7 @@ import { GlubInference } from './inference.js';
 import { buildPrompt } from './prompt-builder.js';
 import { PhraseSelector } from './phrase-selector.js';
 import { Personality } from './personality.js';
+import { RitualScheduler } from './rituals.js';
 import { MSG } from '../shared/protocol.js';
 import {
   TICK_INTERVAL_MS, SAVE_INTERVAL_MS, DEFAULT_PORT,
@@ -130,6 +131,9 @@ function serveStatic(req, res) {
 const server = http.createServer(serveStatic);
 const wss = new WsServer(server);
 
+const rituals = new RitualScheduler();
+rituals.setDeps({ ws: wss, pet });
+
 // --- Wire engine events to WebSocket broadcasts ---
 engine.on('feed', () => wss.broadcast(MSG.FEED, { flakes: 5 }));
 engine.on('poop_add', (poop) => wss.broadcast(MSG.POOP, { action: 'add', ...poop }));
@@ -144,6 +148,13 @@ engine.on('bloat', (d) => wss.broadcast(MSG.BLOAT, d));
 wss.onMessage((msg, ws) => {
   if (msg.type === '_connect') {
     wss.send(ws, MSG.FULL_STATE, pet.snapshot());
+    pet.recordSeen();
+    const reactivation = pet.getReactivation();
+    if (reactivation) {
+      setTimeout(() => {
+        wss.send(ws, MSG.SPEECH, { text: reactivation.text, speaker: 'fish', mood: 'reactivation' });
+      }, 2500);
+    }
     return;
   }
 
@@ -151,7 +162,11 @@ wss.onMessage((msg, ws) => {
     case MSG.CMD_FEED: {
       const result = engine.feed();
       console.log('[glub] Feed:', result.ok ? 'ok' : result.reason);
-      if (result.ok) { personality.onFeed(); broadcastNeeds(); }
+      if (result.ok) {
+        personality.onFeed();
+        broadcastNeeds();
+        pet.recordEvent('feed');
+      }
       else wss.send(ws, 'error', { action: 'feed', ...result });
       break;
     }
@@ -171,7 +186,10 @@ wss.onMessage((msg, ws) => {
     case MSG.CMD_PLAY: {
       const result = engine.play();
       console.log('[glub] Play:', result.ok ? 'ok' : result.reason);
-      if (result.ok) broadcastNeeds();
+      if (result.ok) {
+        broadcastNeeds();
+        pet.recordEvent('play');
+      }
       else wss.send(ws, 'error', { action: 'play', ...result });
       break;
     }
@@ -180,6 +198,7 @@ wss.onMessage((msg, ws) => {
         wss.send(ws, 'error', { action: 'chat', reason: 'invalid_input' });
         break;
       }
+      pet.recordEvent('chat');
       console.log('[glub] Chat:', msg.text.substring(0, 30));
       wss.broadcast(MSG.SPEECH, { text: msg.text, speaker: 'user', mood: '' });
       (async () => {
@@ -221,6 +240,7 @@ function broadcastNeeds() {
 let lastBroadcast = Date.now();
 setInterval(() => {
   engine.tick(TICK_INTERVAL_MS / 1000);
+  rituals.update(TICK_INTERVAL_MS / 1000);
 
   // Broadcast needs every 5 seconds (not every tick)
   if (Date.now() - lastBroadcast > 5000) {
