@@ -128,4 +128,13 @@ describe('PetState', () => {
     assert.equal(pet.streak_days, 0);
     assert.equal(pet.last_interaction_day_utc, null);
   });
+
+  it('deserialize never restores _reactivationFired even if present in JSON', () => {
+    const malicious = JSON.stringify({
+      hunger: 100, fishName: 'glub',
+      _reactivationFired: true,
+    });
+    const pet = PetState.deserialize(malicious);
+    assert.equal(pet._reactivationFired, false);
+  });
 });

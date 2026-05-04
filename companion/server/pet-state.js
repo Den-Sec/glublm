@@ -129,6 +129,7 @@ export class PetState {
       else if (key === 'health') pet._health = clamp(data.health);
       else if (key === 'bond') pet._bond = clamp(data.bond);
       else if (key === 'interactionBonus') pet._interactionBonus = clamp(data.interactionBonus);
+      else if (key === '_reactivationFired') continue; // process-only, never restore
       else if (Object.hasOwn(pet, key)) pet[key] = data[key];
     }
     return pet;
