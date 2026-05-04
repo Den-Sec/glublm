@@ -251,4 +251,51 @@ describe('PetState', () => {
     pet.last_excited_at = 0;
     assert.equal(pet.getMoodScore(), 3);
   });
+
+  it('getReactivation null when last_seen_at == 0', () => {
+    const pet = new PetState();
+    assert.equal(pet.getReactivation(), null);
+  });
+
+  it('getReactivation null when gap < 30min', () => {
+    const pet = new PetState();
+    pet.last_seen_at = Date.now() - 10 * 60_000;
+    assert.equal(pet.getReactivation(), null);
+  });
+
+  it('getReactivation 1h gap -> short variant', async () => {
+    const pet = new PetState();
+    pet.last_seen_at = Date.now() - 60 * 60_000;
+    const { SHORT_REACTIVATIONS } = await import('./pet-state.js');
+    const r = pet.getReactivation();
+    assert.equal(r.variant, 'short');
+    assert.ok(SHORT_REACTIVATIONS.includes(r.text));
+  });
+
+  it('getReactivation 4h gap -> med variant', async () => {
+    const pet = new PetState();
+    pet.last_seen_at = Date.now() - 4 * 3_600_000;
+    const { MED_REACTIVATIONS } = await import('./pet-state.js');
+    const r = pet.getReactivation();
+    assert.equal(r.variant, 'med');
+    assert.ok(MED_REACTIVATIONS.includes(r.text));
+  });
+
+  it('getReactivation 12h gap -> long variant', async () => {
+    const pet = new PetState();
+    pet.last_seen_at = Date.now() - 12 * 3_600_000;
+    const { LONG_REACTIVATIONS } = await import('./pet-state.js');
+    const r = pet.getReactivation();
+    assert.equal(r.variant, 'long');
+    assert.ok(LONG_REACTIVATIONS.includes(r.text));
+  });
+
+  it('getReactivation second call same instance -> null (one-shot)', () => {
+    const pet = new PetState();
+    pet.last_seen_at = Date.now() - 60 * 60_000;
+    const r1 = pet.getReactivation();
+    assert.ok(r1);
+    assert.equal(pet.getReactivation(), null);
+    assert.equal(pet._reactivationFired, true);
+  });
 });
