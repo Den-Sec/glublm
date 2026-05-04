@@ -211,4 +211,44 @@ describe('PetState', () => {
     pet.recordEvent('chat');
     assert.equal(pet.streak_days, 1);
   });
+
+  it('getMoodScore = 0 when never interacted', () => {
+    const pet = new PetState();
+    pet.lastFeedTime = 0;
+    pet.last_chat_at = 0;
+    pet.last_excited_at = 0;
+    assert.equal(pet.getMoodScore(), 0);
+  });
+
+  it('getMoodScore = 3 when most-recent < 2h ago', () => {
+    const pet = new PetState();
+    pet.last_chat_at = Date.now() - 60 * 60_000;     // 1h ago
+    assert.equal(pet.getMoodScore(), 3);
+  });
+
+  it('getMoodScore = 2 when most-recent in [2h, 8h)', () => {
+    const pet = new PetState();
+    pet.last_chat_at = Date.now() - 4 * 3_600_000;   // 4h ago
+    assert.equal(pet.getMoodScore(), 2);
+  });
+
+  it('getMoodScore = 1 when most-recent in [8h, 24h)', () => {
+    const pet = new PetState();
+    pet.last_chat_at = Date.now() - 12 * 3_600_000;  // 12h ago
+    assert.equal(pet.getMoodScore(), 1);
+  });
+
+  it('getMoodScore = 0 when most-recent >= 24h ago', () => {
+    const pet = new PetState();
+    pet.last_chat_at = Date.now() - 30 * 3_600_000;  // 30h ago
+    assert.equal(pet.getMoodScore(), 0);
+  });
+
+  it('getMoodScore uses most recent of feed/chat/excited', () => {
+    const pet = new PetState();
+    pet.last_chat_at = Date.now() - 100 * 3_600_000;     // very old
+    pet.lastFeedTime = Date.now() - 60 * 60_000;          // 1h ago -> joyful
+    pet.last_excited_at = 0;
+    assert.equal(pet.getMoodScore(), 3);
+  });
 });

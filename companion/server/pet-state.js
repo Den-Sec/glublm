@@ -127,6 +127,20 @@ export class PetState {
     }
   }
 
+  getMoodScore() {
+    const mostRecent = Math.max(
+      this.last_chat_at || 0,
+      this.lastFeedTime || 0,
+      this.last_excited_at || 0,
+    );
+    if (mostRecent === 0) return 0;
+    const ageH = (Date.now() - mostRecent) / 3_600_000;
+    if (ageH < 2)  return 3;
+    if (ageH < 8)  return 2;
+    if (ageH < 24) return 1;
+    return 0;
+  }
+
   serialize() {
     return JSON.stringify({
       hunger: this._hunger,
