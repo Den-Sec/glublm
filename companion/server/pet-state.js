@@ -173,6 +173,10 @@ export class PetState {
     else               return { variant: 'long',  text: pickFrom(LONG_REACTIVATIONS) };
   }
 
+  recordSeen() {
+    this.last_seen_at = Date.now();
+  }
+
   serialize() {
     return JSON.stringify({
       hunger: this._hunger,
@@ -236,6 +240,9 @@ export class PetState {
       ageDays: this.ageDays,
       fishName: this.fishName,
       minsSinceInteraction: this.minsSinceInteraction,
+      mood_score: this.getMoodScore(),
+      streak_days: this.streak_days,
+      hour: new Date().getHours(),
     };
   }
 }

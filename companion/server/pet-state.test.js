@@ -298,4 +298,22 @@ describe('PetState', () => {
     assert.equal(pet.getReactivation(), null);
     assert.equal(pet._reactivationFired, true);
   });
+
+  it('recordSeen updates last_seen_at to now', () => {
+    const pet = new PetState();
+    const before = Date.now();
+    pet.recordSeen();
+    assert.ok(pet.last_seen_at >= before);
+  });
+
+  it('snapshot includes mood_score, streak_days, hour', () => {
+    const pet = new PetState();
+    pet.last_chat_at = Date.now() - 60 * 60_000;     // 1h ago -> mood 3
+    pet.streak_days = 5;
+    const snap = pet.snapshot();
+    assert.equal(snap.mood_score, 3);
+    assert.equal(snap.streak_days, 5);
+    assert.equal(typeof snap.hour, 'number');
+    assert.ok(snap.hour >= 0 && snap.hour < 24);
+  });
 });
