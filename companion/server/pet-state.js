@@ -28,6 +28,17 @@ export class PetState {
     this.bondFeedToday = 0;
     this.bondDayStart = this._dayStart();
     this.fishName = 'glub';
+    // Cluster B.3: cross-session retention (bowl memory + rituals)
+    this.last_chat_at = 0;
+    this.last_excited_at = 0;
+    this.last_seen_at = 0;
+    this.total_chats = 0;
+    this.total_excited = 0;
+    this.streak_days = 0;
+    this.last_interaction_day_utc = null;
+    this.last_dawn_greeting = null;
+    this.last_sunset_greeting = null;
+    this._reactivationFired = false;     // process-only, not persisted
   }
 
   get hunger() { return this._hunger; }
@@ -97,6 +108,15 @@ export class PetState {
       bondFeedToday: this.bondFeedToday,
       bondDayStart: this.bondDayStart,
       fishName: this.fishName,
+      last_chat_at: this.last_chat_at,
+      last_excited_at: this.last_excited_at,
+      last_seen_at: this.last_seen_at,
+      total_chats: this.total_chats,
+      total_excited: this.total_excited,
+      streak_days: this.streak_days,
+      last_interaction_day_utc: this.last_interaction_day_utc,
+      last_dawn_greeting: this.last_dawn_greeting,
+      last_sunset_greeting: this.last_sunset_greeting,
     }, null, 2);
   }
 

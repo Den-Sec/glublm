@@ -65,4 +65,67 @@ describe('PetState', () => {
     pet.bond = 85;
     assert.equal(pet.bondLevel, 'bonded');
   });
+
+  it('initializes 9 new B.3 fields with defaults', () => {
+    const pet = new PetState();
+    assert.equal(pet.last_chat_at, 0);
+    assert.equal(pet.last_excited_at, 0);
+    assert.equal(pet.last_seen_at, 0);
+    assert.equal(pet.total_chats, 0);
+    assert.equal(pet.total_excited, 0);
+    assert.equal(pet.streak_days, 0);
+    assert.equal(pet.last_interaction_day_utc, null);
+    assert.equal(pet.last_dawn_greeting, null);
+    assert.equal(pet.last_sunset_greeting, null);
+    assert.equal(pet._reactivationFired, false);
+  });
+
+  it('serializes 9 new B.3 fields', () => {
+    const pet = new PetState();
+    pet.last_chat_at = 1000;
+    pet.last_excited_at = 2000;
+    pet.last_seen_at = 3000;
+    pet.total_chats = 4;
+    pet.total_excited = 5;
+    pet.streak_days = 6;
+    pet.last_interaction_day_utc = '2026-04-28';
+    pet.last_dawn_greeting = '2026-04-28';
+    pet.last_sunset_greeting = '2026-04-27';
+    const data = JSON.parse(pet.serialize());
+    assert.equal(data.last_chat_at, 1000);
+    assert.equal(data.last_excited_at, 2000);
+    assert.equal(data.last_seen_at, 3000);
+    assert.equal(data.total_chats, 4);
+    assert.equal(data.total_excited, 5);
+    assert.equal(data.streak_days, 6);
+    assert.equal(data.last_interaction_day_utc, '2026-04-28');
+    assert.equal(data.last_dawn_greeting, '2026-04-28');
+    assert.equal(data.last_sunset_greeting, '2026-04-27');
+    // _reactivationFired is process-only, NOT persisted
+    assert.equal('_reactivationFired' in data, false);
+  });
+
+  it('deserializes 9 new B.3 fields', () => {
+    const original = new PetState();
+    original.last_chat_at = 1000;
+    original.streak_days = 3;
+    original.last_interaction_day_utc = '2026-04-28';
+    const restored = PetState.deserialize(original.serialize());
+    assert.equal(restored.last_chat_at, 1000);
+    assert.equal(restored.streak_days, 3);
+    assert.equal(restored.last_interaction_day_utc, '2026-04-28');
+  });
+
+  it('deserializes old JSON without B.3 fields -> defaults', () => {
+    const oldJson = JSON.stringify({
+      hunger: 80, cleanliness: 70, health: 90, bond: 30,
+      createdAt: 1000, lastInteraction: 2000, fishName: 'glub',
+      // no last_chat_at, no streak_days, etc.
+    });
+    const pet = PetState.deserialize(oldJson);
+    assert.equal(pet.hunger, 80);
+    assert.equal(pet.last_chat_at, 0);          // default preserved
+    assert.equal(pet.streak_days, 0);
+    assert.equal(pet.last_interaction_day_utc, null);
+  });
 });
