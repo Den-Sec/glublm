@@ -41,14 +41,15 @@ export class PhraseSelector {
   pick(state) {
     const condition = this._getCondition(state);
     const bondIdx = BOND_ORDER.indexOf(state.bondLevel);
+    const hour = state.hour ?? new Date().getHours();
 
     // Build full eligible pool (ignoring recent) to size the recent cap
-    const fullPool = this._buildWeighted(condition, bondIdx, []);
+    const fullPool = this._buildWeighted(condition, bondIdx, [], hour);
     // Cap recent to half the eligible pool to preserve weight distribution
     const maxRecent = Math.min(20, Math.max(0, Math.floor(fullPool.length / 2)));
     while (this._recent.length > maxRecent) this._recent.shift();
 
-    let weighted = this._buildWeighted(condition, bondIdx, this._recent);
+    let weighted = this._buildWeighted(condition, bondIdx, this._recent, hour);
 
     // If all eligible phrases are in recent, clear recent and rebuild
     if (weighted.length === 0) {
@@ -74,7 +75,12 @@ export class PhraseSelector {
     return weighted[weighted.length - 1].phrase;
   }
 
-  _buildWeighted(condition, bondIdx, recent) {
+  _buildWeighted(condition, bondIdx, recent, hour) {
+    const hourCat = hour == null ? null
+                  : hour >= 6 && hour < 12 ? 'morning'
+                  : hour >= 18 && hour < 22 ? 'evening'
+                  : (hour >= 22 || hour < 6) ? 'night' : null;
+
     const weighted = [];
     for (const phrase of this._phrases) {
       if (recent.includes(phrase.text)) continue;
@@ -87,7 +93,9 @@ export class PhraseSelector {
       if (cfg.bondMin && bondIdx < BOND_ORDER.indexOf(cfg.bondMin)) continue;
       if (cfg.bondMax && bondIdx > BOND_ORDER.indexOf(cfg.bondMax)) continue;
 
-      weighted.push({ phrase, weight: w });
+      const hourMul = (hourCat && phrase.category === hourCat) ? 1.5 : 1.0;
+
+      weighted.push({ phrase, weight: w * hourMul });
     }
     return weighted;
   }

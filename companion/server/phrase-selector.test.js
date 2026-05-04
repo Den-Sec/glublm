@@ -130,4 +130,65 @@ describe('PhraseSelector', () => {
     // hungry weight 3 in 'hungry' condition vs notification 0 in 'hungry' -> hungry only
     assert.equal(hungryCount, 100, 'hungry condition should dominate over absent');
   });
+
+  it('pick at state.hour=8 biases morning category higher', () => {
+    const phrases = [
+      { text: 'a-cheer', category: 'generic', weight: 1 },
+      { text: 'b-morning', category: 'morning', weight: 1 },
+    ];
+    const sel = new PhraseSelector(phrases);
+    const counts = { 'a-cheer': 0, 'b-morning': 0 };
+    for (let i = 0; i < 1000; i++) {
+      sel._recent = [];                           // reset cache to compare raw weights
+      const p = sel.pick({ bondLevel: 'familiar', minsSinceInteraction: 0, hour: 8 });
+      counts[p.text] += 1;
+    }
+    // morning has 1.5x weight when hour matches: expect more morning picks than cheerful
+    assert.ok(counts['b-morning'] > counts['a-cheer'],
+      `expected morning > cheerful with hour=8, got ${JSON.stringify(counts)}`);
+  });
+
+  it('pick at state.hour=19 biases evening category higher', () => {
+    const phrases = [
+      { text: 'a-cheer', category: 'generic', weight: 1 },
+      { text: 'c-evening', category: 'evening', weight: 1 },
+    ];
+    const sel = new PhraseSelector(phrases);
+    const counts = { 'a-cheer': 0, 'c-evening': 0 };
+    for (let i = 0; i < 1000; i++) {
+      sel._recent = [];
+      const p = sel.pick({ bondLevel: 'familiar', minsSinceInteraction: 0, hour: 19 });
+      counts[p.text] += 1;
+    }
+    assert.ok(counts['c-evening'] > counts['a-cheer']);
+  });
+
+  it('pick at state.hour=14 (afternoon) -> no category bias', () => {
+    const phrases = [
+      { text: 'a-cheer', category: 'generic', weight: 1 },
+      { text: 'b-morning', category: 'morning', weight: 1 },
+    ];
+    const sel = new PhraseSelector(phrases);
+    const counts = { 'a-cheer': 0, 'b-morning': 0 };
+    for (let i = 0; i < 1000; i++) {
+      sel._recent = [];
+      const p = sel.pick({ bondLevel: 'familiar', minsSinceInteraction: 0, hour: 14 });
+      counts[p.text] += 1;
+    }
+    // hour=14 is neither morning nor evening; both categories get same effective weight
+    const ratio = counts['b-morning'] / Math.max(1, counts['a-cheer']);
+    assert.ok(ratio > 0.3 && ratio < 3.0,
+      `expected near-uniform with hour=14, got ratio ${ratio} ${JSON.stringify(counts)}`);
+  });
+
+  it('pick without state.hour falls back to Date.getHours()', () => {
+    const phrases = [
+      { text: 'a-cheer', category: 'generic', weight: 1 },
+    ];
+    const sel = new PhraseSelector(phrases);
+    const p = sel.pick({ bondLevel: 'familiar', minsSinceInteraction: 0 });
+    // Should not crash; should return a phrase
+    assert.ok(p);
+    assert.equal(p.text, 'a-cheer');
+  });
 });
