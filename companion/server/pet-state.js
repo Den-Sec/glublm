@@ -6,6 +6,20 @@ import {
 
 function clamp(v) { return Math.max(0, Math.min(100, v)); }
 
+function utcDateStr(ts = Date.now()) {
+  const d = new Date(ts);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+}
+
+function utcDaysBetween(a, b) {
+  const parse = (s) => {
+    const [y, m, d] = s.split('-').map(Number);
+    return Date.UTC(y, m - 1, d);
+  };
+  return Math.round((parse(b) - parse(a)) / 86_400_000);
+}
+
 export class PetState {
   constructor() {
     this._hunger = 100;
@@ -84,6 +98,33 @@ export class PetState {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d.getTime();
+  }
+
+  recordEvent(type) {
+    if (type !== 'chat' && type !== 'feed' && type !== 'play') {
+      throw new Error(`Unknown event type: ${type}`);
+    }
+    const now = Date.now();
+    const today = utcDateStr(now);
+    const last = this.last_interaction_day_utc;
+
+    if (!last) {
+      this.streak_days = 1;
+    } else if (last !== today) {
+      const gapDays = utcDaysBetween(last, today);
+      if (gapDays >= 1 && gapDays <= 2) this.streak_days += 1;
+      else if (gapDays > 2)             this.streak_days = 1;
+      // gapDays < 1 (clock skew backwards) -> leave streak unchanged
+    }
+    this.last_interaction_day_utc = today;
+
+    if (type === 'chat') { this.last_chat_at    = now; this.total_chats   += 1; }
+    if (type === 'feed') { this.lastFeedTime    = now; }
+    if (type === 'play') {
+      this.last_excited_at = now;
+      this.total_excited  += 1;
+      this.lastPlayTime    = now;
+    }
   }
 
   serialize() {

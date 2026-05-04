@@ -137,4 +137,78 @@ describe('PetState', () => {
     const pet = PetState.deserialize(malicious);
     assert.equal(pet._reactivationFired, false);
   });
+
+  it('recordEvent("chat") updates last_chat_at + total_chats + day', () => {
+    const pet = new PetState();
+    const before = Date.now();
+    pet.recordEvent('chat');
+    assert.ok(pet.last_chat_at >= before);
+    assert.equal(pet.total_chats, 1);
+    assert.equal(pet.streak_days, 1);
+    assert.ok(pet.last_interaction_day_utc !== null);
+  });
+
+  it('recordEvent("feed") updates lastFeedTime + leaves chat counters alone', () => {
+    const pet = new PetState();
+    pet.recordEvent('feed');
+    assert.ok(pet.lastFeedTime > 0);
+    assert.equal(pet.total_chats, 0);
+  });
+
+  it('recordEvent("play") updates last_excited_at + total_excited + lastPlayTime', () => {
+    const pet = new PetState();
+    pet.recordEvent('play');
+    assert.ok(pet.last_excited_at > 0);
+    assert.equal(pet.total_excited, 1);
+    assert.ok(pet.lastPlayTime > 0);
+  });
+
+  it('recordEvent unknown type throws', () => {
+    const pet = new PetState();
+    assert.throws(() => pet.recordEvent('bogus'), /Unknown event type/);
+  });
+
+  it('streak: same UTC day -> no increment', () => {
+    const pet = new PetState();
+    pet.recordEvent('chat');
+    pet.recordEvent('chat');
+    pet.recordEvent('feed');
+    assert.equal(pet.streak_days, 1);
+  });
+
+  it('streak: gap 1 UTC day -> +1', () => {
+    const pet = new PetState();
+    const today = new Date();
+    const yesterday = new Date(today.getTime() - 24 * 3600 * 1000);
+    const pad = (n) => String(n).padStart(2, '0');
+    const yStr = `${yesterday.getUTCFullYear()}-${pad(yesterday.getUTCMonth() + 1)}-${pad(yesterday.getUTCDate())}`;
+    pet.last_interaction_day_utc = yStr;
+    pet.streak_days = 5;
+    pet.recordEvent('chat');
+    assert.equal(pet.streak_days, 6);
+  });
+
+  it('streak: gap 2 UTC days -> +1 (24h grace)', () => {
+    const pet = new PetState();
+    const today = new Date();
+    const twoDaysAgo = new Date(today.getTime() - 2 * 24 * 3600 * 1000);
+    const pad = (n) => String(n).padStart(2, '0');
+    const yStr = `${twoDaysAgo.getUTCFullYear()}-${pad(twoDaysAgo.getUTCMonth() + 1)}-${pad(twoDaysAgo.getUTCDate())}`;
+    pet.last_interaction_day_utc = yStr;
+    pet.streak_days = 3;
+    pet.recordEvent('chat');
+    assert.equal(pet.streak_days, 4);
+  });
+
+  it('streak: gap 3+ UTC days -> reset to 1', () => {
+    const pet = new PetState();
+    const today = new Date();
+    const fourDaysAgo = new Date(today.getTime() - 4 * 24 * 3600 * 1000);
+    const pad = (n) => String(n).padStart(2, '0');
+    const yStr = `${fourDaysAgo.getUTCFullYear()}-${pad(fourDaysAgo.getUTCMonth() + 1)}-${pad(fourDaysAgo.getUTCDate())}`;
+    pet.last_interaction_day_utc = yStr;
+    pet.streak_days = 7;
+    pet.recordEvent('chat');
+    assert.equal(pet.streak_days, 1);
+  });
 });
