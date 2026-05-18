@@ -38,7 +38,7 @@ jobs:
           ls -la _site/
           ls -la _site/desk-pet/
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: "./_site"
       - name: Deploy
