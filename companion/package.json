@@ -9,7 +9,7 @@
     "test": "node --test server/**/*.test.js shared/**/*.test.js"
   },
   "dependencies": {
-    "onnxruntime-node": "^1.19.0",
+    "onnxruntime-node": "^1.27.0",
     "ws": "^8.16.0"
   },
   "license": "AGPL-3.0-or-later"
